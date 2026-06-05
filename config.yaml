@@ -1,0 +1,65 @@
+gitlab:
+  base_url: "https://gitlab.com/api/v4"
+
+  skills:
+    project_id: "12345678"
+    branch: "main"
+    skills_path: "skills/active"
+    proposal_path: "skills/_proposals"
+    write_mode: "merge_request"
+
+knowledge:
+  paths:
+    - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
+
+memory:
+  local_path: "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory"
+  proposal_path: "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory/_proposals"
+  require_approval: true
+
+projects:
+  base_path: "/Users/oscarbonnet/PycharmProjects"
+  allow_all_under_base_path: true
+  excluded:
+    - "mcp-server"
+    - "python-project-template"
+
+retrieval:
+  embedding_model: "BAAI/bge-small-en-v1.5"
+
+  defaults:
+    skills_top_k: 3
+    knowledge_top_k: 5
+    memory_top_k: 5
+
+  limits:
+    skills_top_k_max: 10
+    knowledge_top_k_max: 20
+    memory_top_k_max: 10
+
+security:
+  allow_gitlab_write: true
+  allow_direct_main_write: false
+  allow_delete: false
+
+  allowed_read_roots:
+    - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
+    - "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory"
+    - "/Users/oscarbonnet/PycharmProjects"
+
+  allowed_write_roots:
+    - "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory/_proposals"
+    - "/Users/oscarbonnet/PycharmProjects"
+
+  never_read:
+    - "/Users/oscarbonnet/.ssh"
+    - "/Users/oscarbonnet/.gnupg"
+    - "/Users/oscarbonnet/Library"
+    - "/Users/oscarbonnet/Downloads"
+    - "/Users/oscarbonnet/Desktop"
+
+  never_write:
+    - "/Users/oscarbonnet/PycharmProjects/mcp-server/.env"
+    - "/Users/oscarbonnet/PycharmProjects/mcp-server/.venv"
+    - "/Users/oscarbonnet/PycharmProjects/mcp-server/storage"
+    - "/Users/oscarbonnet/PycharmProjects/python-project-template"

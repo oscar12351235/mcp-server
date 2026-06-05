@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "mcp-server"
+version = "0.1.0"
+description = "Python project scaffold for mcp-server"
+readme = "README.md"
+authors = ["oscarbonnet <you@example.com>"]
+packages = [{ include = "mcp_server", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.14"
+numpy = ">=1.26,<3.0"
+pandas = ">=2.2,<3.0"
+pydantic = ">=2,<3"
+matplotlib = ">=3.8,<4.0"
+scipy = ">=1.12,<2.0"
+seaborn = ">=0.13,<0.14"
+mcp = "^1.27.2"
+llama-index-core = "^0.14.22"
+llama-index-embeddings-huggingface = "^0.7.0"
+llama-index-readers-file = "^0.6.0"
+llama-index-vector-stores-chroma = "^0.5.5"
+sentence-transformers = "^5.5.1"
+chromadb = "^1.5.9"
+requests = "^2.34.2"
+python-dotenv = "^1.2.2"
+pyyaml = "^6.0.3"
+pypdf = "^6.13.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8,<9"
+black = ">=24,<25"
+
+[tool.poetry.group.lint.dependencies]
+ruff = ">=0.4,<1.0"
+mypy = ">=1.10,<2.0"
+
+[build-system]
+requires = ["poetry-core>=1.9.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
