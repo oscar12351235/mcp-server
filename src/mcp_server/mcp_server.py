@@ -17,6 +17,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from mcp.server.fastmcp import FastMCP
 
 
+
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
 
