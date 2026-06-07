@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import base64
+import logging
+import os
 import re
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -11,31 +14,67 @@ import chromadb
 import requests
 import yaml
 from dotenv import load_dotenv
-from llama_index.core import Document, Settings, SimpleDirectoryReader, StorageContext, VectorStoreIndex
+from llama_index.core import (
+    Document,
+    Settings,
+    SimpleDirectoryReader,
+    StorageContext,
+    VectorStoreIndex,
+)
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from mcp.server.fastmcp import FastMCP
 
 
+# ---------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------
 
-ROOT = Path(__file__).resolve().parent
-load_dotenv(ROOT / ".env")
+# Important for MCP stdio:
+# never print normal logs to stdout, because stdout is used by the MCP protocol.
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stderr,
+    format="[%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
-CONFIG_PATH = ROOT / "config.yaml"
+
+# ---------------------------------------------------------------------
+# Paths and config
+# ---------------------------------------------------------------------
+
+PACKAGE_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = PACKAGE_ROOT.parents[1]
+
+load_dotenv(PROJECT_ROOT / ".env")
+
+CONFIG_PATH = PROJECT_ROOT / "config.yaml"
 CONFIG = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
 
-GITLAB_TOKEN = __import__("os").environ.get("GITLAB_TOKEN")
-GITLAB_BASE_URL = __import__("os").environ.get(
+KNOWLEDGE_PROFILE = os.environ.get(
+    "MCP_KNOWLEDGE_PROFILE",
+    CONFIG["knowledge"].get("default_profile", "indexed"),
+)
+
+GITLAB_TOKEN = os.environ.get("GITLAB_TOKEN")
+GITLAB_BASE_URL = os.environ.get(
     "GITLAB_BASE_URL",
     CONFIG["gitlab"]["base_url"],
 ).rstrip("/")
 
+
+# ---------------------------------------------------------------------
+# MCP app
+# ---------------------------------------------------------------------
+# creates the MCP server instance
 mcp = FastMCP("personal-assistant")
 
 
 # ---------------------------------------------------------------------
 # Security helpers
 # ---------------------------------------------------------------------
+
 
 def _resolve(path: str | Path) -> Path:
     return Path(path).expanduser().resolve()
@@ -49,6 +88,7 @@ def _is_inside(path: Path, root: Path) -> bool:
         return False
 
 
+# These functions prevent the MCP server from reading/writing arbitrary files or arbitrary GitLab repos.
 def _assert_allowed_read(path: str | Path) -> Path:
     resolved = _resolve(path)
 
@@ -58,6 +98,7 @@ def _assert_allowed_read(path: str | Path) -> Path:
             raise PermissionError(f"Blocked by never_read policy: {resolved}")
 
     allowed_roots = [_resolve(p) for p in CONFIG["security"]["allowed_read_roots"]]
+
     if not any(resolved == root or _is_inside(resolved, root) for root in allowed_roots):
         raise PermissionError(f"Read path is not allowlisted: {resolved}")
 
@@ -67,11 +108,53 @@ def _assert_allowed_read(path: str | Path) -> Path:
 def _assert_allowed_write(path: str | Path) -> Path:
     resolved = _resolve(path)
 
+    for forbidden in CONFIG["security"].get("never_write", []):
+        forbidden_path = _resolve(forbidden)
+        if resolved == forbidden_path or _is_inside(resolved, forbidden_path):
+            raise PermissionError(f"Blocked by never_write policy: {resolved}")
+
     allowed_roots = [_resolve(p) for p in CONFIG["security"]["allowed_write_roots"]]
+
     if not any(resolved == root or _is_inside(resolved, root) for root in allowed_roots):
         raise PermissionError(f"Write path is not allowlisted: {resolved}")
 
     return resolved
+
+
+def _get_knowledge_paths(profile: str | None = None) -> list[str]:
+    selected_profile = profile or KNOWLEDGE_PROFILE
+
+    profiles = CONFIG["knowledge"].get("profiles")
+
+    if profiles:
+        if selected_profile not in profiles:
+            available = ", ".join(sorted(profiles))
+            raise ValueError(
+                f"Unknown knowledge profile: {selected_profile}. "
+                f"Available profiles: {available}"
+            )
+
+        paths = profiles[selected_profile].get("paths", [])
+
+    else:
+        # Backward compatibility with old config:
+        # knowledge:
+        #   paths:
+        #     - ...
+        paths = CONFIG["knowledge"].get("paths", [])
+
+    if not paths:
+        raise ValueError(f"No knowledge paths configured for profile: {selected_profile}")
+
+    return [str(path) for path in paths]
+
+
+def _collection_count(name: str) -> int:
+    try:
+        collection = chroma_client.get_collection(name)
+        return collection.count()
+    except Exception:
+        return 0
 
 
 def _slugify(text: str) -> str:
@@ -80,13 +163,71 @@ def _slugify(text: str) -> str:
     return text.strip("-") or "untitled"
 
 
+def _bounded_top_k(value: int | None, default: int, maximum: int) -> int:
+    if value is None:
+        return default
+    return max(1, min(value, maximum))
+
+
+def _get_default_top_k(kind: str) -> int:
+    return int(CONFIG["retrieval"]["defaults"][f"{kind}_top_k"])
+
+
+def _get_max_top_k(kind: str) -> int:
+    return int(CONFIG["retrieval"]["limits"][f"{kind}_top_k_max"])
+
+
+def _assert_allowed_gitlab_project(project_id: str) -> str:
+    """
+    Only allow GitLab access to explicitly configured projects.
+
+    By default, this allows only the configured skills repo.
+    You may add `security.allowed_gitlab_projects` in config.yaml later.
+    """
+    configured_skills_project = str(CONFIG["gitlab"]["skills"]["project_id"])
+
+    allowed = CONFIG["security"].get(
+        "allowed_gitlab_projects",
+        [configured_skills_project],
+    )
+
+    allowed_as_str = {str(p) for p in allowed}
+
+    if str(project_id) not in allowed_as_str:
+        raise PermissionError(f"GitLab project is not allowlisted: {project_id}")
+
+    return str(project_id)
+
+
+def _gitlab_project_api_id(project_id: str) -> str:
+    """
+    GitLab accepts either:
+    - numeric project ID, e.g. "123456789"
+    - URL-encoded full path, e.g. "oscar12351235%2Fskills"
+
+    If the user accidentally gives "oscar12351235/skills",
+    encode it safely.
+    """
+    project_id = str(project_id)
+
+    if re.fullmatch(r"\d+", project_id):
+        return project_id
+
+    if "%2f" in project_id.lower():
+        return project_id
+
+    return quote(project_id, safe="")
+
+
 # ---------------------------------------------------------------------
 # GitLab helpers
 # ---------------------------------------------------------------------
 
+
 def _gitlab_headers() -> dict[str, str]:
     if not GITLAB_TOKEN:
         raise RuntimeError("GITLAB_TOKEN is missing from .env")
+
     return {"PRIVATE-TOKEN": GITLAB_TOKEN}
 
 
@@ -105,11 +246,16 @@ def _gitlab_get(path: str, params: dict[str, Any] | None = None) -> Any:
     return response.json()
 
 
-def _gitlab_post(path: str, json: dict[str, Any]) -> Any:
+def _gitlab_post(
+    path: str, json: dict[str, Any] | None = None, data: dict[str, Any] | None = None
+) -> Any:
     response = requests.post(
         _gitlab_url(path),
-        headers={**_gitlab_headers(), "Content-Type": "application/json"},
+        headers=(
+            {**_gitlab_headers(), "Content-Type": "application/json"} if json else _gitlab_headers()
+        ),
         json=json,
+        data=data,
         timeout=30,
     )
     response.raise_for_status()
@@ -132,15 +278,39 @@ def _list_gitlab_tree_raw(
     repo_path: str = "",
     branch: str = "main",
 ) -> list[dict[str, Any]]:
-    return _gitlab_get(
-        f"projects/{project_id}/repository/tree",
-        params={
+    project_id = _assert_allowed_gitlab_project(project_id)
+    api_project_id = _gitlab_project_api_id(project_id)
+
+    results: list[dict[str, Any]] = []
+    page = 1
+
+    while True:
+        params: dict[str, str | int] = {
             "path": repo_path,
             "ref": branch,
             "recursive": "true",
             "per_page": 100,
-        },
-    )
+            "page": page,
+        }
+        response = requests.get(
+            _gitlab_url(f"projects/{api_project_id}/repository/tree"),
+            headers=_gitlab_headers(),
+            params=params,
+            timeout=30,
+        )
+
+        response.raise_for_status()
+
+        batch = response.json()
+        results.extend(batch)
+
+        next_page = response.headers.get("X-Next-Page")
+        if not next_page:
+            break
+
+        page = int(next_page)
+
+    return results
 
 
 def _read_gitlab_file_raw(
@@ -148,62 +318,100 @@ def _read_gitlab_file_raw(
     file_path: str,
     branch: str = "main",
 ) -> str:
+    project_id = _assert_allowed_gitlab_project(project_id)
+    api_project_id = _gitlab_project_api_id(project_id)
+
     encoded_path = quote(file_path, safe="")
+
     data = _gitlab_get(
-        f"projects/{project_id}/repository/files/{encoded_path}",
+        f"projects/{api_project_id}/repository/files/{encoded_path}",
         params={"ref": branch},
     )
+
     content = base64.b64decode(data["content"]).decode("utf-8", errors="replace")
     return content
 
 
-def _gitlab_file_exists(project_id: str, file_path: str, branch: str) -> bool:
-    encoded_path = quote(file_path, safe="")
-    response = requests.get(
-        _gitlab_url(f"projects/{project_id}/repository/files/{encoded_path}"),
-        headers=_gitlab_headers(),
-        params={"ref": branch},
-        timeout=30,
-    )
-    return response.status_code == 200
-
-
 def _create_gitlab_branch(project_id: str, branch: str, ref: str) -> None:
+    project_id = _assert_allowed_gitlab_project(project_id)
+    api_project_id = _gitlab_project_api_id(project_id)
+
     response = requests.post(
-        _gitlab_url(f"projects/{project_id}/repository/branches"),
+        _gitlab_url(f"projects/{api_project_id}/repository/branches"),
         headers=_gitlab_headers(),
         data={"branch": branch, "ref": ref},
         timeout=30,
     )
 
-    if response.status_code not in (200, 201, 400):
-        response.raise_for_status()
+    if response.status_code in (200, 201):
+        return
+
+    # 400 can mean branch already exists. For our timestamped branches this is unlikely,
+    # but we keep this tolerant to avoid breaking harmless reruns.
+    if response.status_code == 400 and "already exists" in response.text.lower():
+        return
+
+    response.raise_for_status()
 
 
 # ---------------------------------------------------------------------
-# LlamaIndex setup
+# LlamaIndex / Chroma setup
 # ---------------------------------------------------------------------
 
-Settings.embed_model = HuggingFaceEmbedding(
-    model_name=CONFIG["retrieval"]["embedding_model"]
-)
+Settings.embed_model = HuggingFaceEmbedding(model_name=CONFIG["retrieval"]["embedding_model"])
+
+# We only use LlamaIndex for retrieval, not answer generation.
 Settings.llm = None
 
-CHROMA_PATH = ROOT / "storage" / "chroma"
+CHROMA_PATH = PROJECT_ROOT / "storage" / "chroma"
 CHROMA_PATH.mkdir(parents=True, exist_ok=True)
 
 chroma_client = chromadb.PersistentClient(path=str(CHROMA_PATH))
 
 
-def _fresh_collection(name: str):
-    try:
-        chroma_client.delete_collection(name)
-    except Exception:
-        pass
+skills_index: VectorStoreIndex | None = None
+knowledge_index: VectorStoreIndex | None = None
+memory_index: VectorStoreIndex | None = None
+INDEX_STATUS: dict[str, str] = {
+    "skills": "not built yet",
+    "knowledge": "not built yet",
+    "memory": "not built yet",
+}
+
+
+def _get_collection(name: str, force_rebuild: bool = False):
+    if force_rebuild:
+        try:
+            chroma_client.delete_collection(name)
+            logger.info("Deleted existing Chroma collection: %s", name)
+        except Exception:
+            pass
+
     return chroma_client.get_or_create_collection(name)
 
 
-def _build_index(collection_name: str, docs: list[Document]) -> VectorStoreIndex:
+def _build_index(
+    collection_name: str,
+    docs: list[Document],
+    force_rebuild: bool = False,
+) -> VectorStoreIndex:
+    collection = _get_collection(collection_name, force_rebuild=force_rebuild)
+    vector_store = ChromaVectorStore(chroma_collection=collection)
+    storage_context = StorageContext.from_defaults(vector_store=vector_store)
+
+    existing_count = collection.count()
+
+    if existing_count > 0 and not force_rebuild:
+        logger.info(
+            "Using existing Chroma collection '%s' with %s vectors.",
+            collection_name,
+            existing_count,
+        )
+        return VectorStoreIndex.from_vector_store(
+            vector_store=vector_store,
+            storage_context=storage_context,
+        )
+
     if not docs:
         docs = [
             Document(
@@ -212,55 +420,120 @@ def _build_index(collection_name: str, docs: list[Document]) -> VectorStoreIndex
             )
         ]
 
-    collection = _fresh_collection(collection_name)
-    vector_store = ChromaVectorStore(chroma_collection=collection)
-    storage_context = StorageContext.from_defaults(vector_store=vector_store)
+    logger.info(
+        "Building Chroma collection '%s' from %s documents.",
+        collection_name,
+        len(docs),
+    )
 
     return VectorStoreIndex.from_documents(
         docs,
         storage_context=storage_context,
-        show_progress=True,
+        show_progress=False,
     )
+
+
+def _load_single_local_file(path: Path, source_type: str) -> list[Document]:
+    try:
+        loaded = SimpleDirectoryReader(
+            input_files=[str(path)],
+        ).load_data()
+
+        for doc in loaded:
+            doc.metadata["source_type"] = source_type
+            doc.metadata["file_path"] = str(path)
+
+        return loaded
+
+    except Exception as exc:
+        logger.warning("Could not load file %s: %s", path, exc)
+        return []
 
 
 def _load_local_documents(paths: list[str], source_type: str) -> list[Document]:
     documents: list[Document] = []
 
-    for raw_path in paths:
-        path = _assert_allowed_read(raw_path)
+    allowed_suffixes = {
+        ".md",
+        ".txt",
+        ".pdf",
+        ".py",
+        ".yaml",
+        ".yml",
+        ".png",
+        ".epub",
+        ".docx",
+        ".csv",
+        ".xlsx",
+        ".parquet",
+        ".json",
+        ".html"
+    }
 
-        if not path.exists():
+    ignored_dirs = {
+        ".git",
+        ".venv",
+        "venv",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "node_modules",
+        "storage",
+    }
+
+    for raw_path in paths:
+        root = _assert_allowed_read(raw_path)
+
+        if not root.exists():
+            logger.warning("Configured path does not exist: %s", root)
             continue
 
-        reader = SimpleDirectoryReader(
-            input_dir=str(path),
-            recursive=True,
-            required_exts=[
-                ".md",
-                ".txt",
-                ".pdf",
-                ".docx",
-                ".py",
-                ".yaml",
-                ".yml",
-            ],
-        )
+        if root.is_file():
+            if root.suffix.lower() in allowed_suffixes:
+                documents.extend(_load_single_local_file(root, source_type))
+            continue
 
-        loaded = reader.load_data()
-        for doc in loaded:
-            doc.metadata["source_type"] = source_type
-            documents.append(doc)
+        for path in root.rglob("*"):
+            if any(part in ignored_dirs for part in path.parts):
+                continue
+
+            if not path.is_file():
+                continue
+
+            if path.suffix.lower() not in allowed_suffixes:
+                continue
+
+            try:
+                _assert_allowed_read(path)
+            except PermissionError as exc:
+                logger.warning("Skipping blocked file %s: %s", path, exc)
+                continue
+
+            documents.extend(_load_single_local_file(path, source_type))
 
     return documents
 
 
 def _load_gitlab_skills() -> list[Document]:
     skills_cfg = CONFIG["gitlab"]["skills"]
+
     project_id = str(skills_cfg["project_id"])
     branch = skills_cfg["branch"]
     skills_path = skills_cfg["skills_path"]
 
-    items = _list_gitlab_tree_raw(project_id, skills_path, branch)
+    try:
+        items = _list_gitlab_tree_raw(project_id, skills_path, branch)
+    except requests.HTTPError as exc:
+        logger.warning(
+            "Could not load GitLab skills from project=%s path=%s branch=%s: %s",
+            project_id,
+            skills_path,
+            branch,
+            exc,
+        )
+        return []
+
     docs: list[Document] = []
 
     for item in items:
@@ -268,10 +541,16 @@ def _load_gitlab_skills() -> list[Document]:
             continue
 
         file_path = item["path"]
+
         if not file_path.endswith(".md"):
             continue
 
-        content = _read_gitlab_file_raw(project_id, file_path, branch)
+        try:
+            content = _read_gitlab_file_raw(project_id, file_path, branch)
+        except requests.HTTPError as exc:
+            logger.warning("Could not read GitLab file %s: %s", file_path, exc)
+            continue
+
         docs.append(
             Document(
                 text=content,
@@ -288,11 +567,12 @@ def _load_gitlab_skills() -> list[Document]:
 
 
 def _format_nodes(nodes: list[Any], max_chars: int = 1800) -> list[dict[str, Any]]:
-    output = []
+    output: list[dict[str, Any]] = []
 
     for node_with_score in nodes:
         node = node_with_score.node
         text = node.get_content()
+
         output.append(
             {
                 "score": float(node_with_score.score or 0.0),
@@ -304,29 +584,66 @@ def _format_nodes(nodes: list[Any], max_chars: int = 1800) -> list[dict[str, Any
     return output
 
 
-def _rebuild_all_indexes() -> dict[str, str]:
-    global skills_index, knowledge_index, memory_index
+def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
+    global skills_index, knowledge_index, memory_index, INDEX_STATUS
 
-    skills_docs = _load_gitlab_skills()
-    knowledge_docs = _load_local_documents(CONFIG["knowledge"]["paths"], "knowledge")
-    memory_docs = _load_local_documents([CONFIG["memory"]["local_path"]], "memory")
+    knowledge_paths = _get_knowledge_paths()
+    knowledge_collection_name = f"knowledge_{KNOWLEDGE_PROFILE}"
 
-    skills_index = _build_index("skills", skills_docs)
-    knowledge_index = _build_index("knowledge", knowledge_docs)
-    memory_index = _build_index("memory", memory_docs)
+    if force_rebuild:
+        logger.info("Force rebuild enabled. Loading source documents...")
 
-    return {
-        "skills": f"{len(skills_docs)} docs indexed",
-        "knowledge": f"{len(knowledge_docs)} docs indexed",
-        "memory": f"{len(memory_docs)} docs indexed",
+        logger.info("Loading GitLab skills...")
+        skills_docs = _load_gitlab_skills()
+
+        logger.info("Loading local knowledge...")
+        knowledge_docs = _load_local_documents(knowledge_paths, "knowledge")
+
+        logger.info("Loading local memory...")
+        memory_docs = _load_local_documents([CONFIG["memory"]["local_path"]], "memory")
+    else:
+        skills_docs = []
+        knowledge_docs = []
+        memory_docs = []
+
+    logger.info("Building/loading skills index...")
+    skills_index = _build_index(
+        "skills",
+        skills_docs,
+        force_rebuild=force_rebuild,
+    )
+
+    logger.info("Building/loading knowledge index...")
+    knowledge_index = _build_index(
+        knowledge_collection_name,
+        knowledge_docs,
+        force_rebuild=force_rebuild,
+    )
+
+    logger.info("Building/loading memory index...")
+    memory_index = _build_index(
+        "memory",
+        memory_docs,
+        force_rebuild=force_rebuild,
+    )
+
+    INDEX_STATUS = {
+        "skills_collection": "skills",
+        "knowledge_collection": knowledge_collection_name,
+        "memory_collection": "memory",
+        "knowledge_profile": KNOWLEDGE_PROFILE,
+        "knowledge_paths": ", ".join(knowledge_paths),
+        "mode": "force_rebuild" if force_rebuild else "load_existing_or_empty",
     }
 
+    logger.info("Index status: %s", INDEX_STATUS)
 
-skills_index: VectorStoreIndex
-knowledge_index: VectorStoreIndex
-memory_index: VectorStoreIndex
+    return INDEX_STATUS
 
-INDEX_STATUS = _rebuild_all_indexes()
+
+def _ensure_indexes() -> None:
+    if skills_index is None or knowledge_index is None or memory_index is None:
+        _rebuild_all_indexes()
 
 
 # ---------------------------------------------------------------------
@@ -334,38 +651,116 @@ INDEX_STATUS = _rebuild_all_indexes()
 # ---------------------------------------------------------------------
 
 @mcp.tool()
-def retrieve_skills(query: str) -> list[dict[str, Any]]:
+def collection_status() -> dict[str, Any]:
+    """Show Chroma collection names and vector counts."""
+    knowledge_collection_name = f"knowledge_{KNOWLEDGE_PROFILE}"
+
+    return {
+        "skills": {
+            "collection": "skills",
+            "vectors": _collection_count("skills"),
+        },
+        "knowledge": {
+            "collection": knowledge_collection_name,
+            "profile": KNOWLEDGE_PROFILE,
+            "vectors": _collection_count(knowledge_collection_name),
+            "paths": _get_knowledge_paths(),
+        },
+        "memory": {
+            "collection": "memory",
+            "vectors": _collection_count("memory"),
+        },
+    }
+
+@mcp.tool()
+def refresh_indexes(force_rebuild: bool = False) -> dict[str, str]:
+    """
+    Load existing indexes or rebuild them.
+
+    If force_rebuild=True, source files are reparsed and Chroma collections are rebuilt.
+    If force_rebuild=False, existing Chroma collections are reused when available.
+    """
+    return _rebuild_all_indexes(force_rebuild=force_rebuild)
+
+@mcp.tool()
+def rebuild_indexes() -> dict[str, str]:
+    """Force a full rebuild of skills, knowledge, and memory indexes."""
+    return _rebuild_all_indexes(force_rebuild=True)
+
+@mcp.tool()
+def knowledge_profile_status() -> dict[str, Any]:
+    """Show the active knowledge profile and paths."""
+    return {
+        "active_profile": KNOWLEDGE_PROFILE,
+        "paths": _get_knowledge_paths(),
+    }
+
+@mcp.tool()
+def index_status() -> dict[str, str]:
+    """Show current index status."""
+    return INDEX_STATUS
+
+
+@mcp.tool()
+def retrieve_skills(query: str, top_k: int | None = None) -> list[dict[str, Any]]:
     """Retrieve relevant GitLab skill files for a task."""
-    retriever = skills_index.as_retriever(
-        similarity_top_k=CONFIG["retrieval"]["skills_top_k"]
+    _ensure_indexes()
+
+    assert skills_index is not None
+
+    k = _bounded_top_k(
+        top_k,
+        _get_default_top_k("skills"),
+        _get_max_top_k("skills"),
     )
+
+    retriever = skills_index.as_retriever(similarity_top_k=k)
     nodes = retriever.retrieve(query)
+
     return _format_nodes(nodes)
 
 
 @mcp.tool()
-def retrieve_knowledge(query: str) -> list[dict[str, Any]]:
+def retrieve_knowledge(query: str, top_k: int | None = None) -> list[dict[str, Any]]:
     """Retrieve relevant local knowledge from books, articles, and notes."""
-    retriever = knowledge_index.as_retriever(
-        similarity_top_k=CONFIG["retrieval"]["knowledge_top_k"]
+    _ensure_indexes()
+
+    assert knowledge_index is not None
+
+    k = _bounded_top_k(
+        top_k,
+        _get_default_top_k("knowledge"),
+        _get_max_top_k("knowledge"),
     )
+
+    retriever = knowledge_index.as_retriever(similarity_top_k=k)
     nodes = retriever.retrieve(query)
+
     return _format_nodes(nodes)
 
 
 @mcp.tool()
-def retrieve_memory(query: str) -> list[dict[str, Any]]:
+def retrieve_memory(query: str, top_k: int | None = None) -> list[dict[str, Any]]:
     """Retrieve relevant long-term memory about preferences, projects, and decisions."""
-    retriever = memory_index.as_retriever(
-        similarity_top_k=CONFIG["retrieval"]["memory_top_k"]
+    _ensure_indexes()
+
+    assert memory_index is not None
+
+    k = _bounded_top_k(
+        top_k,
+        _get_default_top_k("memory"),
+        _get_max_top_k("memory"),
     )
+
+    retriever = memory_index.as_retriever(similarity_top_k=k)
     nodes = retriever.retrieve(query)
+
     return _format_nodes(nodes)
 
 
 @mcp.tool()
 def read_local_file(path: str) -> str:
-    """Read an allowlisted local file."""
+    """Read an allowlisted local text file."""
     resolved = _assert_allowed_read(path)
 
     if not resolved.is_file():
@@ -386,28 +781,50 @@ def list_local_files(directory: str) -> list[str]:
 
 
 @mcp.tool()
-def get_gitlab_file(project_id: str, file_path: str, branch: str = "main") -> str:
-    """Read a file from an allowed GitLab project."""
-    return _read_gitlab_file_raw(project_id, file_path, branch)
+def get_gitlab_file(
+    file_path: str,
+    project_id: str | None = None,
+    branch: str | None = None,
+) -> str:
+    """Read a file from an allowlisted GitLab project."""
+    skills_cfg = CONFIG["gitlab"]["skills"]
+
+    selected_project_id = str(project_id or skills_cfg["project_id"])
+    selected_branch = str(branch or skills_cfg["branch"])
+
+    return _read_gitlab_file_raw(selected_project_id, file_path, selected_branch)
 
 
 @mcp.tool()
 def list_gitlab_repo(
-    project_id: str,
+    project_id: str | None = None,
     repo_path: str = "",
-    branch: str = "main",
+    branch: str | None = None,
 ) -> list[dict[str, Any]]:
-    """List a GitLab repository tree."""
-    return _list_gitlab_tree_raw(project_id, repo_path, branch)
+    """List a GitLab repository tree for an allowlisted project."""
+    skills_cfg = CONFIG["gitlab"]["skills"]
+
+    selected_project_id = str(project_id or skills_cfg["project_id"])
+    selected_branch = str(branch or skills_cfg["branch"])
+
+    return _list_gitlab_tree_raw(selected_project_id, repo_path, selected_branch)
 
 
 @mcp.tool()
 def propose_memory_update(category: str, content: str, reason: str) -> str:
     """
     Create a local memory proposal.
+
     This does not directly update permanent memory.
     """
-    allowed_categories = {"profile", "projects", "decisions", "preferences", "working_style"}
+    allowed_categories = {
+        "profile",
+        "projects",
+        "decisions",
+        "preferences",
+        "working_style",
+    }
+
     clean_category = _slugify(category)
 
     if clean_category not in allowed_categories:
@@ -446,7 +863,8 @@ created_at: {timestamp}
 def propose_new_skill(name: str, content: str, reason: str) -> dict[str, Any]:
     """
     Create a proposed skill in GitLab using a branch and merge request.
-    Does not push directly to main.
+
+    This does not push directly to main.
     """
     if not CONFIG["security"]["allow_gitlab_write"]:
         raise PermissionError("GitLab write is disabled in config.yaml")
@@ -457,11 +875,14 @@ def propose_new_skill(name: str, content: str, reason: str) -> dict[str, Any]:
     skills_cfg = CONFIG["gitlab"]["skills"]
 
     project_id = str(skills_cfg["project_id"])
+    api_project_id = _gitlab_project_api_id(_assert_allowed_gitlab_project(project_id))
+
     base_branch = skills_cfg["branch"]
     proposal_path = skills_cfg["proposal_path"]
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     slug = _slugify(name)
+
     branch = f"agent/skill-proposal-{timestamp}-{slug}"
     file_path = f"{proposal_path}/{timestamp}-{slug}.md"
 
@@ -478,8 +899,9 @@ reason: {reason}
     _create_gitlab_branch(project_id, branch, base_branch)
 
     encoded_path = quote(file_path, safe="")
+
     _gitlab_post(
-        f"projects/{project_id}/repository/files/{encoded_path}",
+        f"projects/{api_project_id}/repository/files/{encoded_path}",
         json={
             "branch": branch,
             "content": full_content,
@@ -488,7 +910,7 @@ reason: {reason}
     )
 
     mr = _gitlab_post(
-        f"projects/{project_id}/merge_requests",
+        f"projects/{api_project_id}/merge_requests",
         json={
             "source_branch": branch,
             "target_branch": base_branch,
@@ -505,17 +927,14 @@ reason: {reason}
     }
 
 
-@mcp.tool()
-def refresh_indexes() -> dict[str, str]:
-    """Rebuild skills, knowledge, and memory retrieval indexes."""
-    return _rebuild_all_indexes()
+# ---------------------------------------------------------------------
+# Entrypoint
+# ---------------------------------------------------------------------
 
 
-@mcp.tool()
-def index_status() -> dict[str, str]:
-    """Show current index status."""
-    return INDEX_STATUS
+def main() -> None:
+    mcp.run()
 
 
 if __name__ == "__main__":
-    mcp.run()
+    main()

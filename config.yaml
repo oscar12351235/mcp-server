@@ -2,15 +2,23 @@ gitlab:
   base_url: "https://gitlab.com/api/v4"
 
   skills:
-    project_id: "12345678"
+    project_id: "82914338"
     branch: "main"
     skills_path: "skills/active"
     proposal_path: "skills/_proposals"
     write_mode: "merge_request"
 
 knowledge:
-  paths:
-    - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
+  default_profile: "indexed"
+
+  profiles:
+    indexed:
+      paths:
+        - "/Users/oscarbonnet/Documents/80–89 Knowledge Base/87 Indexed"
+
+    full:
+      paths:
+        - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
 
 memory:
   local_path: "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory"
@@ -25,7 +33,7 @@ projects:
     - "python-project-template"
 
 retrieval:
-  embedding_model: "BAAI/bge-small-en-v1.5"
+  embedding_model: "BAAI/bge-base-en-v1.5"
 
   defaults:
     skills_top_k: 3
@@ -43,9 +51,9 @@ security:
   allow_delete: false
 
   allowed_read_roots:
-    - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
-    - "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory"
-    - "/Users/oscarbonnet/PycharmProjects"
+    - "/Users/oscarbonnet/Documents/80–89 Knowledge Base" # local math/cs/finance books, articles, etc
+    - "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory" # local MCP memory about projects, personal preferences on how to do things, etc
+    - "/Users/oscarbonnet/PycharmProjects" # local PycharmProjects repos
 
   allowed_write_roots:
     - "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory/_proposals"
