@@ -21,10 +21,10 @@ from llama_index.core import (
     StorageContext,
     VectorStoreIndex,
 )
+from llama_index.core.llms import MockLLM
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from mcp.server.fastmcp import FastMCP
-
 
 # ---------------------------------------------------------------------
 # Logging
@@ -88,7 +88,7 @@ def _is_inside(path: Path, root: Path) -> bool:
         return False
 
 
-# These functions prevent the MCP server from reading/writing arbitrary files or arbitrary GitLab repos.
+# These functions prevent the MCP server from reading/writing arbitrary files or GitLab repos.
 def _assert_allowed_read(path: str | Path) -> Path:
     resolved = _resolve(path)
 
@@ -358,10 +358,8 @@ def _create_gitlab_branch(project_id: str, branch: str, ref: str) -> None:
 # LlamaIndex / Chroma setup
 # ---------------------------------------------------------------------
 
-Settings.embed_model = HuggingFaceEmbedding(model_name=CONFIG["retrieval"]["embedding_model"])
-
 # We only use LlamaIndex for retrieval, not answer generation.
-Settings.llm = None
+Settings.llm = MockLLM()
 
 CHROMA_PATH = PROJECT_ROOT / "storage" / "chroma"
 CHROMA_PATH.mkdir(parents=True, exist_ok=True)
@@ -377,6 +375,17 @@ INDEX_STATUS: dict[str, str] = {
     "knowledge": "not built yet",
     "memory": "not built yet",
 }
+_EMBEDDING_MODEL_READY = False
+
+
+def _ensure_embedding_model() -> None:
+    global _EMBEDDING_MODEL_READY
+
+    if _EMBEDDING_MODEL_READY:
+        return
+
+    Settings.embed_model = HuggingFaceEmbedding(model_name=CONFIG["retrieval"]["embedding_model"])
+    _EMBEDDING_MODEL_READY = True
 
 
 def _get_collection(name: str, force_rebuild: bool = False):
@@ -395,6 +404,8 @@ def _build_index(
     docs: list[Document],
     force_rebuild: bool = False,
 ) -> VectorStoreIndex:
+    _ensure_embedding_model()
+
     collection = _get_collection(collection_name, force_rebuild=force_rebuild)
     vector_store = ChromaVectorStore(chroma_collection=collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
@@ -467,7 +478,7 @@ def _load_local_documents(paths: list[str], source_type: str) -> list[Document]:
         ".xlsx",
         ".parquet",
         ".json",
-        ".html"
+        ".html",
     }
 
     ignored_dirs = {
@@ -650,6 +661,7 @@ def _ensure_indexes() -> None:
 # MCP tools
 # ---------------------------------------------------------------------
 
+
 @mcp.tool()
 def collection_status() -> dict[str, Any]:
     """Show Chroma collection names and vector counts."""
@@ -672,6 +684,7 @@ def collection_status() -> dict[str, Any]:
         },
     }
 
+
 @mcp.tool()
 def refresh_indexes(force_rebuild: bool = False) -> dict[str, str]:
     """
@@ -682,10 +695,12 @@ def refresh_indexes(force_rebuild: bool = False) -> dict[str, str]:
     """
     return _rebuild_all_indexes(force_rebuild=force_rebuild)
 
+
 @mcp.tool()
 def rebuild_indexes() -> dict[str, str]:
     """Force a full rebuild of skills, knowledge, and memory indexes."""
     return _rebuild_all_indexes(force_rebuild=True)
+
 
 @mcp.tool()
 def knowledge_profile_status() -> dict[str, Any]:
@@ -694,6 +709,7 @@ def knowledge_profile_status() -> dict[str, Any]:
         "active_profile": KNOWLEDGE_PROFILE,
         "paths": _get_knowledge_paths(),
     }
+
 
 @mcp.tool()
 def index_status() -> dict[str, str]:

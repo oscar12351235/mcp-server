@@ -33,7 +33,7 @@ projects:
     - "python-project-template"
 
 retrieval:
-  embedding_model: "BAAI/bge-base-en-v1.5"
+  embedding_model: "BAAI/bge-small-en-v1.5"
 
   defaults:
     skills_top_k: 3
