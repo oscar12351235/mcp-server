@@ -6,6 +6,7 @@ import sys
 EXPECTED_TOOLS = {
     "collection_status",
     "embedding_config_status",
+    "embedding_status",
     "config_status",
     "knowledge_profile_status",
     "index_status",
@@ -79,6 +80,7 @@ def test_embedding_config_status_reports_active_profile(monkeypatch):
 
     status = server.embedding_config_status()
 
+    assert status["active_profile"] == "local_bge_small"
     assert status["embedding_profile"] == "local_bge_small"
     assert status["provider"] == "local_huggingface"
     assert status["model"] == "BAAI/bge-small-en-v1.5"
@@ -86,6 +88,7 @@ def test_embedding_config_status_reports_active_profile(monkeypatch):
     assert status["chunking_profile"] == "structure_v1"
     assert len(status["embedding_fingerprint"]) == 16
     assert len(status["retrieval_fingerprint"]) == 16
+    assert status["collections"]["knowledge"].startswith("knowledge_indexed_local_bge_small_")
 
 
 def test_changing_embedding_model_changes_collection_name(monkeypatch):
@@ -176,3 +179,31 @@ def test_retrieval_final_top_k_is_default_when_reranker_disabled(monkeypatch):
     monkeypatch.setitem(server.CONFIG["retrieval"], "final_top_k", 11)
 
     assert server._knowledge_final_top_k(None) == 11
+
+
+def test_qwen3_4b_profile_changes_collection_name(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+
+    monkeypatch.setitem(server.CONFIG["embedding"], "active_profile", "local_qwen3_4b")
+
+    collection_name = server._collection_name("knowledge")
+    status = server.embedding_config_status()
+
+    assert "local_qwen3_4b" in collection_name
+    assert "qwen_qwen3_embedding_4b" in collection_name
+    assert "2560" in collection_name
+    assert status["active_profile"] == "local_qwen3_4b"
+    assert status["model"] == "Qwen/Qwen3-Embedding-4B"
+    assert status["dimension"] == 2560
+    assert status["collections"]["knowledge"] == collection_name
+
+
+def test_qwen3_8b_profile_reports_heavy_model_warning(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+
+    monkeypatch.setitem(server.CONFIG["embedding"], "active_profile", "local_qwen3_8b")
+
+    status = server.embedding_status()
+
+    assert status["active_profile"] == "local_qwen3_8b"
+    assert any("8B" in warning and "heavy" in warning for warning in status["warnings"])

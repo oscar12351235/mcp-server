@@ -24,7 +24,6 @@ from llama_index.core import (
     VectorStoreIndex,
 )
 from llama_index.core.llms import MockLLM
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from mcp.server.fastmcp import FastMCP
 
@@ -34,6 +33,10 @@ from mcp_server.retrieval.bm25_store import (
     write_bm25_index,
 )
 from mcp_server.retrieval.chunkers import chunk_file, chunk_markdown, chunks_to_documents
+from mcp_server.retrieval.embeddings import (
+    build_embedding_backend,
+    embedding_profile_warnings,
+)
 from mcp_server.retrieval.hybrid import Candidate, fuse_candidates
 from mcp_server.retrieval.manifest import (
     detect_changes,
@@ -118,7 +121,8 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
     provider = active_embedding["provider"]
     if provider != "local_huggingface":
         raise ValueError(
-            f"Embedding provider is configured but not implemented in this phase: {provider}"
+            f"Embedding provider is configured but not implemented in this phase: {provider}. "
+            "Supported provider: local_huggingface. Voyage is reserved for a future phase."
         )
 
     chunking = config.setdefault("chunking", {})
@@ -660,16 +664,23 @@ INDEX_STATUS: dict[str, str] = {
     "memory": "not built yet",
 }
 _EMBEDDING_MODEL_READY = False
+_EMBEDDING_MODEL_FINGERPRINT: str | None = None
 
 
 def _ensure_embedding_model() -> None:
-    global _EMBEDDING_MODEL_READY
+    global _EMBEDDING_MODEL_FINGERPRINT, _EMBEDDING_MODEL_READY
 
-    if _EMBEDDING_MODEL_READY:
+    fingerprint = _embedding_config_fingerprint()
+    if _EMBEDDING_MODEL_READY and _EMBEDDING_MODEL_FINGERPRINT == fingerprint:
         return
 
-    Settings.embed_model = HuggingFaceEmbedding(model_name=_active_embedding_config()["model"])
+    backend = build_embedding_backend(
+        _active_embedding_profile_name(),
+        _active_embedding_config(),
+    )
+    Settings.embed_model = backend.build_llamaindex_embedding()
     _EMBEDDING_MODEL_READY = True
+    _EMBEDDING_MODEL_FINGERPRINT = fingerprint
 
 
 def _chunking_limits() -> tuple[int, int]:
@@ -1258,6 +1269,7 @@ def embedding_config_status() -> dict[str, Any]:
     chunking_cfg = _active_chunking_config()
 
     return {
+        "active_profile": _active_embedding_profile_name(),
         "embedding_profile": _active_embedding_profile_name(),
         "provider": embedding_cfg["provider"],
         "model": embedding_cfg["model"],
@@ -1267,7 +1279,19 @@ def embedding_config_status() -> dict[str, Any]:
         "retrieval_fingerprint": _retrieval_config_fingerprint(),
         "chunking_profile": _active_chunking_profile_name(),
         "chunking": chunking_cfg,
+        "warnings": embedding_profile_warnings(embedding_cfg),
+        "collections": {
+            "skills": _collection_name("skills"),
+            "knowledge": _collection_name("knowledge"),
+            "memory": _collection_name("memory"),
+        },
     }
+
+
+@mcp.tool()
+def embedding_status() -> dict[str, Any]:
+    """Show active embedding profile and model-specific collection names."""
+    return embedding_config_status()
 
 
 @mcp.tool()

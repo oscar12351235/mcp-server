@@ -69,6 +69,22 @@ embedding:
       dimension: 384
       normalize: true
 
+    local_qwen3_4b:
+      provider: "local_huggingface"
+      model: "Qwen/Qwen3-Embedding-4B"
+      dimension: 2560
+      normalize: true
+      instruction: "Represent this document for retrieval."
+      trust_remote_code: true
+
+    local_qwen3_8b:
+      provider: "local_huggingface"
+      model: "Qwen/Qwen3-Embedding-8B"
+      dimension: 4096
+      normalize: true
+      instruction: "Represent this document for retrieval."
+      trust_remote_code: true
+
 chunking:
   active_profile: "structure_v1"
 
