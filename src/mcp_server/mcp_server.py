@@ -1204,20 +1204,79 @@ def _record_manifest_for_documents(
             upsert_chunk(MANIFEST_DB_PATH, chunk_row)
 
 
-def _format_nodes(nodes: list[Any], max_chars: int = 1800) -> list[dict[str, Any]]:
+def _observability_context(
+    *,
+    domain: str,
+    mode: str,
+    collection_name: str,
+) -> dict[str, Any]:
+    return {
+        "retrieval_mode": mode,
+        "domain": domain,
+        "collection": collection_name,
+        "embedding_profile": _active_embedding_profile_name(),
+        "embedding_provider": _active_embedding_provider(),
+        "embedding_model": _active_embedding_config().get("model"),
+        "embedding_fingerprint": _embedding_config_fingerprint(),
+        "chunking_profile": _active_chunking_profile_name(),
+        "bm25_enabled": _bm25_enabled(),
+        "reranker_enabled": _reranker_enabled(),
+        "reranker_model": _reranker_model() if _reranker_enabled() else None,
+        "fusion_method": _fusion_method(),
+        "knowledge_profile": KNOWLEDGE_PROFILE if domain == "knowledge" else None,
+    }
+
+
+def _result_scores_from_metadata(metadata: dict[str, Any], score: float) -> dict[str, Any]:
+    return {
+        "final_score": float(score),
+        "dense_score": metadata.get("dense_score"),
+        "bm25_score": metadata.get("bm25_score"),
+        "fused_score": metadata.get("fused_score"),
+        "rerank_score": metadata.get("rerank_score"),
+        "fused_rank": metadata.get("fused_rank"),
+        "final_rank": metadata.get("final_rank"),
+    }
+
+
+def _enrich_result(
+    item: dict[str, Any],
+    *,
+    context: dict[str, Any] | None,
+    rank: int,
+) -> dict[str, Any]:
+    metadata = item.get("metadata") or {}
+    enriched = dict(item)
+    enriched.setdefault("rank", rank)
+    enriched.setdefault("source_path", metadata.get("file_path"))
+    enriched.setdefault("source_type", metadata.get("source_type") or metadata.get("source_group"))
+    enriched.setdefault("scores", _result_scores_from_metadata(metadata, item.get("score", 0.0)))
+    if context is not None:
+        enriched["retrieval_mode"] = context["retrieval_mode"]
+        enriched["collection"] = context["collection"]
+        enriched["embedding_profile"] = context["embedding_profile"]
+        enriched["reranker_enabled"] = context["reranker_enabled"]
+    return enriched
+
+
+def _format_nodes(
+    nodes: list[Any],
+    max_chars: int = 1800,
+    *,
+    context: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     output: list[dict[str, Any]] = []
 
-    for node_with_score in nodes:
+    for rank, node_with_score in enumerate(nodes, start=1):
         node = node_with_score.node
         text = node.get_content()
 
-        output.append(
-            {
-                "score": float(node_with_score.score or 0.0),
-                "metadata": node.metadata,
-                "text": text[:max_chars],
-            }
-        )
+        item = {
+            "score": float(node_with_score.score or 0.0),
+            "metadata": node.metadata,
+            "text": text[:max_chars],
+        }
+        output.append(_enrich_result(item, context=context, rank=rank))
 
     return output
 
@@ -1249,15 +1308,21 @@ def _dense_candidates(nodes: list[Any]) -> list[Candidate]:
     return candidates
 
 
-def _format_candidates(candidates: list[Candidate], max_chars: int = 1800) -> list[dict[str, Any]]:
-    return [
-        {
+def _format_candidates(
+    candidates: list[Candidate],
+    max_chars: int = 1800,
+    *,
+    context: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for rank, candidate in enumerate(candidates, start=1):
+        item = {
             "score": float(candidate.score),
             "metadata": candidate.metadata,
             "text": candidate.text[:max_chars],
         }
-        for candidate in candidates
-    ]
+        output.append(_enrich_result(item, context=context, rank=rank))
+    return output
 
 
 def _retrieve_knowledge_hybrid(query: str, final_top_k: int) -> list[dict[str, Any]]:
@@ -1292,7 +1357,13 @@ def _retrieve_knowledge_hybrid(query: str, final_top_k: int) -> list[dict[str, A
         logger=logger,
     )
 
-    return _format_candidates(reranked)
+    mode = "hybrid+rerank" if _reranker_enabled() else "hybrid"
+    context = _observability_context(
+        domain="knowledge",
+        mode=mode,
+        collection_name=knowledge_collection_name,
+    )
+    return _format_candidates(reranked, context=context)
 
 
 def _knowledge_debug_payload(query: str, final_top_k: int) -> dict[str, Any]:
@@ -1517,6 +1588,94 @@ def config_status() -> dict[str, Any]:
         "knowledge_profile": KNOWLEDGE_PROFILE,
         "knowledge_paths": _get_knowledge_paths(),
         "embedding": embedding_config_status(),
+    }
+
+
+@mcp.tool()
+def retrieval_config_status() -> dict[str, Any]:
+    """Show active retrieval pipeline config: top_k values, BM25, fusion, reranker."""
+    retrieval_cfg = CONFIG.get("retrieval", {})
+    return {
+        "bm25_enabled": _bm25_enabled(),
+        "fusion_method": _fusion_method(),
+        "dense_top_k": _dense_top_k(),
+        "bm25_top_k": _bm25_top_k(),
+        "fused_top_k": _fused_top_k(),
+        "retrieval_final_top_k": _retrieval_final_top_k(),
+        "default_final_top_k": _default_final_top_k(),
+        "defaults": dict(retrieval_cfg.get("defaults", {})),
+        "limits": dict(retrieval_cfg.get("limits", {})),
+        "reranker": _reranker_status(),
+        "retrieval_fingerprint": _retrieval_config_fingerprint(),
+        "code_retrieval_enabled": _code_retrieval_enabled(),
+        "code_retrieval_fingerprint": _code_retrieval_fingerprint(),
+    }
+
+
+@mcp.tool()
+def index_manifest_status(profile: str | None = None) -> dict[str, Any]:
+    """Show indexing manifest status: db path, profile, file/chunk counts."""
+    db_exists = MANIFEST_DB_PATH.exists()
+    payload: dict[str, Any] = {
+        "manifest_db_path": str(MANIFEST_DB_PATH),
+        "exists": db_exists,
+    }
+    if not db_exists:
+        return payload
+
+    selected_profile = profile or KNOWLEDGE_PROFILE
+    try:
+        files = get_files_for_profile(MANIFEST_DB_PATH, selected_profile)
+    except Exception as exc:
+        payload["error"] = f"Failed to read manifest: {exc}"
+        return payload
+
+    by_status: dict[str, int] = {}
+    by_extension: dict[str, int] = {}
+    last_indexed_at: str | None = None
+    for row in files:
+        by_status[row.status] = by_status.get(row.status, 0) + 1
+        ext = row.extension or "<none>"
+        by_extension[ext] = by_extension.get(ext, 0) + 1
+        if row.last_indexed_at and (
+            last_indexed_at is None or row.last_indexed_at > last_indexed_at
+        ):
+            last_indexed_at = row.last_indexed_at
+
+    payload.update(
+        {
+            "profile": selected_profile,
+            "total_files": len(files),
+            "by_status": by_status,
+            "by_extension": by_extension,
+            "last_indexed_at": last_indexed_at,
+            "collection_name": _get_profile_collection_name(selected_profile),
+        }
+    )
+    return payload
+
+
+@mcp.tool()
+def runtime_status() -> dict[str, Any]:
+    """Aggregate runtime diagnostics: profile, embeddings, collections, indexes, reranker."""
+    return {
+        "knowledge_profile": KNOWLEDGE_PROFILE,
+        "knowledge_paths": _get_knowledge_paths(),
+        "embedding_profile": _active_embedding_profile_name(),
+        "embedding_provider": _active_embedding_provider(),
+        "embedding_model": _active_embedding_config().get("model"),
+        "chunking_profile": _active_chunking_profile_name(),
+        "bm25_enabled": _bm25_enabled(),
+        "reranker": _reranker_status(),
+        "code_retrieval_enabled": _code_retrieval_enabled(),
+        "loaded_indexes": {
+            "skills": skills_index is not None,
+            "knowledge": knowledge_index is not None,
+            "memory": memory_index is not None,
+            "code": code_index is not None,
+        },
+        "collections": collection_status(),
+        "index_status": INDEX_STATUS,
     }
 
 
@@ -1823,7 +1982,12 @@ def retrieve_skills(query: str, top_k: int | None = None) -> list[dict[str, Any]
     retriever = skills_index.as_retriever(similarity_top_k=k)
     nodes = retriever.retrieve(query)
 
-    return _format_nodes(nodes)
+    context = _observability_context(
+        domain="skills",
+        mode="dense",
+        collection_name=_collection_name("skills"),
+    )
+    return _format_nodes(nodes, context=context)
 
 
 @mcp.tool()
@@ -1853,7 +2017,13 @@ def retrieve_knowledge(query: str, top_k: int | None = None) -> list[dict[str, A
         logger=logger,
     )
 
-    return _format_candidates(reranked)
+    mode = "dense+rerank" if _reranker_enabled() else "dense"
+    context = _observability_context(
+        domain="knowledge",
+        mode=mode,
+        collection_name=_collection_name("knowledge"),
+    )
+    return _format_candidates(reranked, context=context)
 
 
 @mcp.tool()
@@ -1929,7 +2099,17 @@ def retrieve_code(
         logger=logger,
     )
 
-    return format_code_candidates(candidates["reranked"])
+    mode = "hybrid+rerank" if _reranker_enabled() else "hybrid"
+    context = _observability_context(
+        domain="code",
+        mode=mode,
+        collection_name=collection_name,
+    )
+    formatted = format_code_candidates(candidates["reranked"])
+    return [
+        _enrich_result(item, context=context, rank=rank)
+        for rank, item in enumerate(formatted, start=1)
+    ]
 
 
 @mcp.tool()
@@ -1989,7 +2169,12 @@ def retrieve_memory(query: str, top_k: int | None = None) -> list[dict[str, Any]
     retriever = memory_index.as_retriever(similarity_top_k=k)
     nodes = retriever.retrieve(query)
 
-    return _format_nodes(nodes)
+    context = _observability_context(
+        domain="memory",
+        mode="dense",
+        collection_name=_collection_name("memory"),
+    )
+    return _format_nodes(nodes, context=context)
 
 
 @mcp.tool()

@@ -49,3 +49,6 @@ storage/
 knowledge_index_report.csv
 knowledge_index_failed.csv
 knowledge_candidate_files.txt
+
+# Evaluation outputs
+eval/results/*.json

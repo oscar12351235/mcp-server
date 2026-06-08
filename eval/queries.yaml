@@ -1,0 +1,226 @@
+# Retrieval evaluation query set.
+#
+# Each query has:
+#   id                 - stable identifier used in output filenames and diffs
+#   query              - the actual user-facing question/phrase
+#   domain             - retrieval surface to call (knowledge, code, skills, memory)
+#   tags               - free-form labels (finance, math, cs, ml, debugging, ...)
+#   expected_terms     - substrings that should appear in at least one returned chunk
+#   expected_paths_any - if any returned chunk metadata.file_path contains any of these
+#                        substrings, the path expectation passes
+#
+# All expectations are optional. Missing expectations are simply skipped during scoring.
+
+queries:
+  # --------------------------- finance ----------------------------
+  - id: pca_markets
+    query: "Explain PCA in equity markets"
+    domain: knowledge
+    tags: [finance, math]
+    expected_terms:
+      - PCA
+      - principal
+      - components
+    expected_paths_any:
+      - finance
+      - pca
+
+  - id: black_scholes_greeks
+    query: "Black-Scholes delta and gamma"
+    domain: knowledge
+    tags: [finance, math]
+    expected_terms:
+      - Black-Scholes
+      - delta
+      - gamma
+
+  - id: factor_models
+    query: "Fama-French three factor model"
+    domain: knowledge
+    tags: [finance]
+    expected_terms:
+      - Fama
+      - French
+      - factor
+
+  - id: var_risk
+    query: "Value at risk for a portfolio"
+    domain: knowledge
+    tags: [finance, risk]
+    expected_terms:
+      - value at risk
+      - VaR
+
+  # ----------------------------- math -----------------------------
+  - id: linear_algebra_svd
+    query: "Singular value decomposition intuition"
+    domain: knowledge
+    tags: [math, linear-algebra]
+    expected_terms:
+      - SVD
+      - singular
+      - decomposition
+
+  - id: probability_bayes
+    query: "Bayes theorem with a worked example"
+    domain: knowledge
+    tags: [math, probability]
+    expected_terms:
+      - Bayes
+      - posterior
+
+  - id: optimization_gradient
+    query: "Gradient descent convergence conditions"
+    domain: knowledge
+    tags: [math, optimization]
+    expected_terms:
+      - gradient
+      - descent
+
+  # ----------------------------- CS/ML ----------------------------
+  - id: transformer_attention
+    query: "Self-attention mechanism in transformers"
+    domain: knowledge
+    tags: [cs, ml]
+    expected_terms:
+      - attention
+      - transformer
+
+  - id: rag_basics
+    query: "Retrieval augmented generation pipeline"
+    domain: knowledge
+    tags: [cs, ml]
+    expected_terms:
+      - retrieval
+      - RAG
+
+  - id: bm25_lexical
+    query: "BM25 ranking function term frequency"
+    domain: knowledge
+    tags: [cs, ir]
+    expected_terms:
+      - BM25
+      - term frequency
+
+  - id: embeddings_dense
+    query: "Dense embeddings versus sparse retrieval"
+    domain: knowledge
+    tags: [cs, ir]
+    expected_terms:
+      - embedding
+      - dense
+
+  # --------------------------- code -------------------------------
+  - id: gitlab_file_reader
+    query: "Where is the GitLab file reading function implemented?"
+    domain: code
+    tags: [code, mcp]
+    expected_terms:
+      - _read_gitlab_file_raw
+      - base64
+    expected_paths_any:
+      - mcp_server.py
+
+  - id: hybrid_fusion
+    query: "Reciprocal rank fusion implementation"
+    domain: code
+    tags: [code, retrieval]
+    expected_terms:
+      - rrf
+      - fuse_candidates
+    expected_paths_any:
+      - hybrid.py
+
+  - id: bm25_store_code
+    query: "BM25 index store load and write"
+    domain: code
+    tags: [code, retrieval]
+    expected_terms:
+      - bm25
+      - load_bm25_index
+    expected_paths_any:
+      - bm25_store.py
+
+  - id: reranker_code
+    query: "Cross encoder reranker fallback"
+    domain: code
+    tags: [code, retrieval]
+    expected_terms:
+      - rerank
+      - CrossEncoder
+    expected_paths_any:
+      - rerankers.py
+
+  - id: manifest_change_detection
+    query: "Detect added edited deleted files in manifest"
+    domain: code
+    tags: [code, indexing]
+    expected_terms:
+      - detect_changes
+      - manifest
+    expected_paths_any:
+      - manifest.py
+
+  - id: code_chunker_ast
+    query: "Python AST chunker for classes and functions"
+    domain: code
+    tags: [code, chunking]
+    expected_terms:
+      - ast
+      - symbol
+    expected_paths_any:
+      - code_chunker.py
+
+  - id: collection_naming
+    query: "ChromaDB collection name includes embedding model"
+    domain: code
+    tags: [code, mcp]
+    expected_terms:
+      - collection
+      - embedding
+    expected_paths_any:
+      - mcp_server.py
+
+  # --------------------------- skills -----------------------------
+  - id: skill_python_debug
+    query: "How to debug a Python issue"
+    domain: skills
+    tags: [skills, python]
+    expected_terms:
+      - debug
+
+  - id: skill_refactor
+    query: "Plan a safe refactor"
+    domain: skills
+    tags: [skills]
+    expected_terms:
+      - refactor
+
+  - id: skill_test_design
+    query: "Designing tests for a new feature"
+    domain: skills
+    tags: [skills, testing]
+    expected_terms:
+      - test
+
+  # --------------------------- memory -----------------------------
+  - id: memory_preferences
+    query: "User coding preferences and style"
+    domain: memory
+    tags: [memory]
+    expected_terms:
+      - preference
+
+  - id: memory_projects
+    query: "Active project context for MCP server"
+    domain: memory
+    tags: [memory]
+    expected_terms:
+      - mcp
+
+  - id: memory_decisions
+    query: "Past architectural decisions"
+    domain: memory
+    tags: [memory]
+    expected_terms:
+      - decision

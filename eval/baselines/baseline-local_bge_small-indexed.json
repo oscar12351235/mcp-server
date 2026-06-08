@@ -1,0 +1,3486 @@
+{
+  "run_id": "20260608-175651-local_bge_small-indexed",
+  "started_at": "20260608-175651",
+  "duration_ms": 63552,
+  "note": "phase09 full baseline",
+  "filters": {
+    "query_ids": null,
+    "tag": null,
+    "domain": null,
+    "top_k_override": 5
+  },
+  "runtime": {
+    "knowledge_profile": "indexed",
+    "knowledge_paths": [
+      "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed"
+    ],
+    "embedding_profile": "local_bge_small",
+    "embedding_provider": "local_huggingface",
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "chunking_profile": "structure_v1",
+    "bm25_enabled": true,
+    "reranker": {
+      "enabled": true,
+      "provider": "local_huggingface",
+      "model": "BAAI/bge-reranker-v2-m3",
+      "candidate_top_k": 50,
+      "final_top_k": 8,
+      "batch_size": 8
+    },
+    "code_retrieval_enabled": true,
+    "loaded_indexes": {
+      "skills": true,
+      "knowledge": true,
+      "memory": true,
+      "code": true
+    },
+    "collections": {
+      "skills": {
+        "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+        "vectors": 32,
+        "embedding": {
+          "domain": "skills",
+          "knowledge_profile": "global",
+          "embedding_profile": "local_bge_small",
+          "embedding_provider": "local_huggingface",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "embedding_dimension": "384",
+          "embedding_fingerprint": "20e51edb3ac6617e",
+          "retrieval_fingerprint": "50cdf0e680b36002",
+          "code_retrieval_fingerprint": "",
+          "chunking_profile": "structure_v1"
+        }
+      },
+      "knowledge": {
+        "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+        "profile": "indexed",
+        "vectors": 152,
+        "paths": [
+          "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed"
+        ],
+        "embedding": {
+          "domain": "knowledge",
+          "knowledge_profile": "indexed",
+          "embedding_profile": "local_bge_small",
+          "embedding_provider": "local_huggingface",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "embedding_dimension": "384",
+          "embedding_fingerprint": "20e51edb3ac6617e",
+          "retrieval_fingerprint": "50cdf0e680b36002",
+          "code_retrieval_fingerprint": "",
+          "chunking_profile": "structure_v1"
+        }
+      },
+      "memory": {
+        "collection": "memory_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+        "vectors": 1,
+        "embedding": {
+          "domain": "memory",
+          "knowledge_profile": "global",
+          "embedding_profile": "local_bge_small",
+          "embedding_provider": "local_huggingface",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "embedding_dimension": "384",
+          "embedding_fingerprint": "20e51edb3ac6617e",
+          "retrieval_fingerprint": "50cdf0e680b36002",
+          "code_retrieval_fingerprint": "",
+          "chunking_profile": "structure_v1"
+        }
+      },
+      "code": {
+        "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+        "profile": "projects",
+        "enabled": true,
+        "vectors": 737,
+        "embedding": {
+          "domain": "code",
+          "knowledge_profile": "projects",
+          "embedding_profile": "local_bge_small",
+          "embedding_provider": "local_huggingface",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "embedding_dimension": "384",
+          "embedding_fingerprint": "20e51edb3ac6617e",
+          "retrieval_fingerprint": "50cdf0e680b36002",
+          "code_retrieval_fingerprint": "ba20dd24c7b4da6d",
+          "chunking_profile": "structure_v1"
+        }
+      }
+    },
+    "index_status": {
+      "skills_collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "knowledge_collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "memory_collection": "memory_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "code_collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+      "code_enabled": "True",
+      "code_profile": "projects",
+      "code_bm25_index_path": "/Users/oscarbonnet/PycharmProjects/mcp-server/storage/bm25/code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d.jsonl",
+      "knowledge_profile": "indexed",
+      "knowledge_paths": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed",
+      "embedding_profile": "local_bge_small",
+      "embedding_fingerprint": "20e51edb3ac6617e",
+      "retrieval_fingerprint": "50cdf0e680b36002",
+      "chunking_profile": "structure_v1",
+      "bm25_enabled": "True",
+      "bm25_index_path": "/Users/oscarbonnet/PycharmProjects/mcp-server/storage/bm25/knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002.jsonl",
+      "reranker_enabled": "True",
+      "reranker_provider": "local_huggingface",
+      "reranker_model": "BAAI/bge-reranker-v2-m3",
+      "mode": "load_existing_or_empty"
+    }
+  },
+  "retrieval_config": {
+    "bm25_enabled": true,
+    "fusion_method": "rrf",
+    "dense_top_k": 60,
+    "bm25_top_k": 60,
+    "fused_top_k": 80,
+    "retrieval_final_top_k": 8,
+    "default_final_top_k": 8,
+    "defaults": {
+      "skills_top_k": 3,
+      "knowledge_top_k": 8,
+      "memory_top_k": 5
+    },
+    "limits": {
+      "skills_top_k_max": 10,
+      "knowledge_top_k_max": 30,
+      "memory_top_k_max": 10
+    },
+    "reranker": {
+      "enabled": true,
+      "provider": "local_huggingface",
+      "model": "BAAI/bge-reranker-v2-m3",
+      "candidate_top_k": 50,
+      "final_top_k": 8,
+      "batch_size": 8
+    },
+    "retrieval_fingerprint": "50cdf0e680b36002",
+    "code_retrieval_enabled": true,
+    "code_retrieval_fingerprint": "ba20dd24c7b4da6d"
+  },
+  "aggregate": {
+    "queries_total": 24,
+    "queries_with_errors": 0,
+    "mean_expected_terms_hit_rate": 0.458,
+    "mean_expected_paths_hit": 0.375,
+    "latency_ms": {
+      "min": 8,
+      "max": 8269,
+      "mean": 2647
+    }
+  },
+  "results": [
+    {
+      "query_id": "pca_markets",
+      "query": "Explain PCA in equity markets",
+      "domain": "knowledge",
+      "tags": [
+        "finance",
+        "math"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 8269,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "PCA",
+        "principal",
+        "components"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [
+        "finance",
+        "pca"
+      ],
+      "expected_paths_found": [],
+      "expected_paths_hit": false,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.004178898874670267,
+          "scores": {
+            "final_score": 0.004178898874670267,
+            "dense_score": null,
+            "bm25_score": 4.0974218629805215,
+            "fused_score": 0.012048192771084338,
+            "rerank_score": 0.004178898874670267,
+            "fused_rank": 45,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 50,
+          "text_preview": "that capacity if they can get the \nstudents they prefer), but who were free to admit fewer students, and proved the \nfollowing impossibility result.12\n\nTheorem 12 (S\u00f6nmez, 1997) No stable matching mechanism makes it a dominant \nstrategy for a college to always reveal its capacity.\n\nBefore moving on to consider how deferred acceptance algorithms may function in \nmarkets, I should note that they hav"
+        },
+        {
+          "rank": 2,
+          "score": 0.003912200685590506,
+          "scores": {
+            "final_score": 0.003912200685590506,
+            "dense_score": null,
+            "bm25_score": 4.588089929116461,
+            "fused_score": 0.013513513513513514,
+            "rerank_score": 0.003912200685590506,
+            "fused_rank": 40,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 93,
+          "text_preview": "21\n\nTheorem 14 (Kojima and Pathak, 2007): In the limit, as n goes to infinity in a regular \nsequence of random markets, the proportion of employers who might profit from (any \ncombination of) preference or capacity manipulation goes to zero in the worker proposing \ndeferred acceptance algorithm.\n\nA second empirical observation made in the resident match data, and in the other matches \nin Table 1, "
+        },
+        {
+          "rank": 3,
+          "score": 0.003846667241305113,
+          "scores": {
+            "final_score": 0.003846667241305113,
+            "dense_score": 0.5158790824236797,
+            "bm25_score": 4.507099414481952,
+            "fused_score": 0.027692895339954164,
+            "rerank_score": 0.003846667241305113,
+            "fused_rank": 10,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 1,
+          "text_preview": "569.\n\nDeferred Acceptance Algorithms: History, Theory, Practice, and Open \nQuestions\n\nBy Alvin E. Roth1 \nHarvard University \nThis draft: 18 July, 2007\n\nAbstract:  \nThe deferred acceptance algorithm proposed by Gale and Shapley (1962) has had \na profound influence on market design, both directly, by being adapted into practical \nmatching mechanisms, and, indirectly, by raising new theoretical quest"
+        },
+        {
+          "rank": 4,
+          "score": 0.0032269475050270557,
+          "scores": {
+            "final_score": 0.0032269475050270557,
+            "dense_score": 0.47699132961804547,
+            "bm25_score": 5.088329382628969,
+            "fused_score": 0.02473040977713875,
+            "rerank_score": 0.0032269475050270557,
+            "fused_rank": 18,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 60,
+          "text_preview": "ct \nto the AAMC, he was invited to help organize the NRMP match, and implemented his \nversion of a hospital proposing deferred acceptance algorithm.16\n\nIndeed, deferred acceptance algorithms, with some variations, have been independently \ndeveloped in quite a few markets over time, in part because, when a clearinghouse is \ncalled for to replace some market failure, deferred acceptance seems to cor"
+        },
+        {
+          "rank": 5,
+          "score": 0.0032097904477268457,
+          "scores": {
+            "final_score": 0.0032097904477268457,
+            "dense_score": 0.4708430571271117,
+            "bm25_score": 3.0571142516184375,
+            "fused_score": 0.017908538535337384,
+            "rerank_score": 0.0032097904477268457,
+            "fused_rank": 37,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 69,
+          "text_preview": "16\nRoth and Peranson (1999) reports on the new clearinghouse algorithm that we designed, a \ngeneralized applicant-proposing deferred acceptance algorithm that allows couples to \nstate preferences over pairs of positions, allows hospitals to specify reversions of \npositions, and deals with some other features of the market as well, such as allowing \nindividuals who need to arrange two consecutive p"
+        }
+      ]
+    },
+    {
+      "query_id": "black_scholes_greeks",
+      "query": "Black-Scholes delta and gamma",
+      "domain": "knowledge",
+      "tags": [
+        "finance",
+        "math"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2745,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "Black-Scholes",
+        "delta",
+        "gamma"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.029419125989079475,
+          "scores": {
+            "final_score": 0.029419125989079475,
+            "dense_score": 0.4998704353398329,
+            "bm25_score": 0.1387363698010426,
+            "fused_score": 0.030834914611005692,
+            "rerank_score": 0.029419125989079475,
+            "fused_rank": 1,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 46,
+          "text_preview": "nts are substitutes rather than complements in colleges\u2019 \npreferences (i.e. there is no student who is only desirable if some other student is also in\n\n9   Indeed, for many years there were no good models that unified the parallel results not only for marriage \nand assignment models, but for more general auction and matching models.  Principal among these were \nthe dominant strategy results for th"
+        },
+        {
+          "rank": 2,
+          "score": 0.025609485805034637,
+          "scores": {
+            "final_score": 0.025609485805034637,
+            "dense_score": null,
+            "bm25_score": 0.1342305233359413,
+            "fused_score": 0.0125,
+            "rerank_score": 0.025609485805034637,
+            "fused_rank": 46,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 23,
+          "text_preview": "oduced by the algorithm \nwould not admit any student-college blocking pairs defined precisely as for the marriage \nmodel.\n\n2. Subsequent developments:\n\nGS implicitly raised a number of interesting questions, and other new questions arose as \ngame theory developed and as the model was adapted and used to explore actual markets \nand design new ones.\n\n2.1 The marriage model\n/Users/oscarbonnet/Documen"
+        },
+        {
+          "rank": 3,
+          "score": 0.01315819751471281,
+          "scores": {
+            "final_score": 0.01315819751471281,
+            "dense_score": 0.48251880381494133,
+            "bm25_score": 0.12879102798388933,
+            "fused_score": 0.018695652173913044,
+            "rerank_score": 0.01315819751471281,
+            "fused_rank": 27,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 69,
+          "text_preview": "16\nRoth and Peranson (1999) reports on the new clearinghouse algorithm that we designed, a \ngeneralized applicant-proposing deferred acceptance algorithm that allows couples to \nstate preferences over pairs of positions, allows hospitals to specify reversions of \npositions, and deals with some other features of the market as well, such as allowing \nindividuals who need to arrange two consecutive p"
+        },
+        {
+          "rank": 4,
+          "score": 0.005303391255438328,
+          "scores": {
+            "final_score": 0.005303391255438328,
+            "dense_score": 0.4771714733702959,
+            "bm25_score": 0.1337472993361737,
+            "fused_score": 0.02085561497326203,
+            "rerank_score": 0.005303391255438328,
+            "fused_rank": 19,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 16,
+          "text_preview": "er to date, and rejects the rest.\n\nSTOP:  when no further proposals are made, and match each woman to the man (if any) \nwhose proposal she is holding.\n\n4 At his birthday celebration in Stony Brook on 12 July 2007, David Gale related the story of his \ncollaboration with Shapley to produce GS by saying that he (Gale) had proposed the model and definition \nof stability, and had sent to a number of co"
+        },
+        {
+          "rank": 5,
+          "score": 0.0029611289501190186,
+          "scores": {
+            "final_score": 0.0029611289501190186,
+            "dense_score": 0.48721910596295265,
+            "bm25_score": 0.1309221835266195,
+            "fused_score": 0.02085133967156439,
+            "rerank_score": 0.0029611289501190186,
+            "fused_rank": 20,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 8,
+          "text_preview": "2\nclearinghouses, and of rules for decentralized markets, has also raised new theoretical \nquestions.\n\nThis review will be organized as follows.  Section 1 reviews the results presented \nin GS.  Section 2 selectively reviews some subsequent theoretical developments that \nhelped set the stage for making these results practical tools for analyzing and designing \nmarket mechanisms.  Section 3, again "
+        }
+      ]
+    },
+    {
+      "query_id": "factor_models",
+      "query": "Fama-French three factor model",
+      "domain": "knowledge",
+      "tags": [
+        "finance"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2512,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "Fama",
+        "French",
+        "factor"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.027171749621629715,
+          "scores": {
+            "final_score": 0.027171749621629715,
+            "dense_score": null,
+            "bm25_score": 3.6022818270528325,
+            "fused_score": 0.011111111111111112,
+            "rerank_score": 0.027171749621629715,
+            "fused_rank": 50,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 36,
+          "text_preview": "individuals remains, the \nhope that such mechanisms can also prevent coalitions from profitably colluding by mis-\nstating their preferences vanishes.\n\nTo formalize this we will have to consider more general models, with money and/or \nmany-to-one matching, but a good idea of what will generalize and what will not can be \nobtained by reexamining Example 1.  The reason that m1 and m3 don\u2019t get their "
+        },
+        {
+          "rank": 2,
+          "score": 0.020558279007673264,
+          "scores": {
+            "final_score": 0.020558279007673264,
+            "dense_score": null,
+            "bm25_score": 4.893246999973429,
+            "fused_score": 0.013157894736842105,
+            "rerank_score": 0.020558279007673264,
+            "fused_rank": 31,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 37,
+          "text_preview": "of transferring any money at all between agents, m1 or m3 could give a penny \nto m2 from their gains, and the coalition of all the men would benefit.\n\nIn a model with many-to-one matching, e.g. between firms and workers, or colleges and \nstudents, suppose that, in Example 1, m1 and m2 were in fact one agent, m12 with two \npositions. Then the example makes clear that if m12 pursues m1 and m2\u2019s true"
+        },
+        {
+          "rank": 3,
+          "score": 0.013588870875537395,
+          "scores": {
+            "final_score": 0.013588870875537395,
+            "dense_score": null,
+            "bm25_score": 4.62280829189293,
+            "fused_score": 0.0125,
+            "rerank_score": 0.013588870875537395,
+            "fused_rank": 36,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 16,
+          "text_preview": "er to date, and rejects the rest.\n\nSTOP:  when no further proposals are made, and match each woman to the man (if any) \nwhose proposal she is holding.\n\n4 At his birthday celebration in Stony Brook on 12 July 2007, David Gale related the story of his \ncollaboration with Shapley to produce GS by saying that he (Gale) had proposed the model and definition \nof stability, and had sent to a number of co"
+        },
+        {
+          "rank": 4,
+          "score": 0.01296043861657381,
+          "scores": {
+            "final_score": 0.01296043861657381,
+            "dense_score": null,
+            "bm25_score": 5.383152520031373,
+            "fused_score": 0.0136986301369863,
+            "rerank_score": 0.01296043861657381,
+            "fused_rank": 27,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 71,
+          "text_preview": "of the suit was that the matching system was a conspiracy \nto hold down wages for residents and fellows, in violation of the Sherman Antitrust Act.25\n\n24 The establishment of a clearinghouse interacts with the extent of a market. Thus in Table 1, almost all \nentry level medical residencies, in almost all specialties, are handled simultaneously by the NRMP \nclearinghouse, and we can therefore consi"
+        },
+        {
+          "rank": 5,
+          "score": 0.010024751536548138,
+          "scores": {
+            "final_score": 0.010024751536548138,
+            "dense_score": 0.5080447957707804,
+            "bm25_score": 6.194446354223065,
+            "fused_score": 0.02736726874657909,
+            "rerank_score": 0.010024751536548138,
+            "fused_rank": 7,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 23,
+          "text_preview": "oduced by the algorithm \nwould not admit any student-college blocking pairs defined precisely as for the marriage \nmodel.\n\n2. Subsequent developments:\n\nGS implicitly raised a number of interesting questions, and other new questions arose as \ngame theory developed and as the model was adapted and used to explore actual markets \nand design new ones.\n\n2.1 The marriage model"
+        }
+      ]
+    },
+    {
+      "query_id": "var_risk",
+      "query": "Value at risk for a portfolio",
+      "domain": "knowledge",
+      "tags": [
+        "finance",
+        "risk"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2577,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "value at risk",
+        "VaR"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.00518655264750123,
+          "scores": {
+            "final_score": 0.00518655264750123,
+            "dense_score": 0.48452783072575184,
+            "bm25_score": 4.284999869982424,
+            "fused_score": 0.020673486786018755,
+            "rerank_score": 0.00518655264750123,
+            "fused_rank": 14,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 36,
+          "text_preview": "individuals remains, the \nhope that such mechanisms can also prevent coalitions from profitably colluding by mis-\nstating their preferences vanishes.\n\nTo formalize this we will have to consider more general models, with money and/or \nmany-to-one matching, but a good idea of what will generalize and what will not can be \nobtained by reexamining Example 1.  The reason that m1 and m3 don\u2019t get their "
+        },
+        {
+          "rank": 2,
+          "score": 0.0017599986167624593,
+          "scores": {
+            "final_score": 0.0017599986167624593,
+            "dense_score": 0.49130099893527557,
+            "bm25_score": null,
+            "fused_score": 0.012658227848101266,
+            "rerank_score": 0.0017599986167624593,
+            "fused_rank": 47,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 83,
+          "text_preview": "orem answers that question in the negative. (Note that the first \npart of the theorem is a straightforward generalization of the result of McVitie and\n\n27 A great deal can be learned by studying flawed existing allocation systems. In this connection see e.g. \nBalinski and Sonmez (1999), Ergin and Sonmez (2006), and Pathak and Sonmez (2007)."
+        },
+        {
+          "rank": 3,
+          "score": 0.0008710207766853273,
+          "scores": {
+            "final_score": 0.0008710207766853273,
+            "dense_score": 0.48322161443352224,
+            "bm25_score": 2.7448401505381286,
+            "fused_score": 0.01875,
+            "rerank_score": 0.0008710207766853273,
+            "fused_rank": 21,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 46,
+          "text_preview": "nts are substitutes rather than complements in colleges\u2019 \npreferences (i.e. there is no student who is only desirable if some other student is also in\n\n9   Indeed, for many years there were no good models that unified the parallel results not only for marriage \nand assignment models, but for more general auction and matching models.  Principal among these were \nthe dominant strategy results for th"
+        },
+        {
+          "rank": 4,
+          "score": 0.0007328129722736776,
+          "scores": {
+            "final_score": 0.0007328129722736776,
+            "dense_score": 0.48564845991565164,
+            "bm25_score": 3.2392900545875483,
+            "fused_score": 0.019585687382297552,
+            "rerank_score": 0.0007328129722736776,
+            "fused_rank": 18,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 37,
+          "text_preview": "of transferring any money at all between agents, m1 or m3 could give a penny \nto m2 from their gains, and the coalition of all the men would benefit.\n\nIn a model with many-to-one matching, e.g. between firms and workers, or colleges and \nstudents, suppose that, in Example 1, m1 and m2 were in fact one agent, m12 with two \npositions. Then the example makes clear that if m12 pursues m1 and m2\u2019s true"
+        },
+        {
+          "rank": 5,
+          "score": 0.0004036207974422723,
+          "scores": {
+            "final_score": 0.0004036207974422723,
+            "dense_score": 0.4825397993358963,
+            "bm25_score": 4.448288083923609,
+            "fused_score": 0.020513359983168524,
+            "rerank_score": 0.0004036207974422723,
+            "fused_rank": 15,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 90,
+          "text_preview": "t interviews (and hence the size of his rank order list) does not \ngrow, then the set of stable matchings becomes small (when preferences are strict).\n\nThis observation has sparked some new theory, and raised some conjectures. Immorlica \nand Mahdian (2005) showed analytically that in the marriage model with uncorrelated \npreferences, the set of people who are matched to different mates at differen"
+        }
+      ]
+    },
+    {
+      "query_id": "linear_algebra_svd",
+      "query": "Singular value decomposition intuition",
+      "domain": "knowledge",
+      "tags": [
+        "math",
+        "linear-algebra"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2326,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "SVD",
+        "singular",
+        "decomposition"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.0012538568116724491,
+          "scores": {
+            "final_score": 0.0012538568116724491,
+            "dense_score": 0.4890472593674641,
+            "bm25_score": null,
+            "fused_score": 0.009174311926605505,
+            "rerank_score": 0.0012538568116724491,
+            "fused_rank": 49,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 28,
+          "text_preview": "} with preferences given \nby :\n\nP(m1) = w2, w1, w3\n\nP(w1) = m1, m2, m3\n\nP(m2) = w1, w2, w3\n\nP(w2) = m3, m1, m2\n\nP(m3) = w1, w2, w3\n\nP(w3) = m1, m2, m3\n\nThen at \u00b5M = [(m1,w1); (m2,w3); (m3,w2)], m1 and m3 each receive their second \nchoice mate (while m2 receives his last choice).  But at the (unstable) matching \u00b5 = \n[(m1,w2); (m2,w3); (m3,w1)], m1 and m3 each receive their first choice, so they are"
+        },
+        {
+          "rank": 2,
+          "score": 0.0007439800538122654,
+          "scores": {
+            "final_score": 0.0007439800538122654,
+            "dense_score": 0.4952496286819648,
+            "bm25_score": null,
+            "fused_score": 0.010416666666666666,
+            "rerank_score": 0.0007439800538122654,
+            "fused_rank": 36,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 104,
+          "text_preview": "that is Pareto dominated \n(from the point of view of students) by another stable matching, then there is a stable \nimprovement cycle starting from \u00b5 .\n\nErdil and Ergin show that, as a result, there is a computationally efficient algorithm that \nproduces stable matchings that are Pareto optimal with respect to students. The initial \nstep of the algorithm is a student-proposing deferred acceptance a"
+        },
+        {
+          "rank": 3,
+          "score": 0.0007321341545321047,
+          "scores": {
+            "final_score": 0.0007321341545321047,
+            "dense_score": 0.499150610082909,
+            "bm25_score": null,
+            "fused_score": 0.011494252873563218,
+            "rerank_score": 0.0007321341545321047,
+            "fused_rank": 28,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 46,
+          "text_preview": "nts are substitutes rather than complements in colleges\u2019 \npreferences (i.e. there is no student who is only desirable if some other student is also in\n\n9   Indeed, for many years there were no good models that unified the parallel results not only for marriage \nand assignment models, but for more general auction and matching models.  Principal among these were \nthe dominant strategy results for th"
+        },
+        {
+          "rank": 4,
+          "score": 0.0006929364753887057,
+          "scores": {
+            "final_score": 0.0006929364753887057,
+            "dense_score": 0.4895138736418911,
+            "bm25_score": null,
+            "fused_score": 0.009345794392523364,
+            "rerank_score": 0.0006929364753887057,
+            "fused_rank": 47,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 93,
+          "text_preview": "21\n\nTheorem 14 (Kojima and Pathak, 2007): In the limit, as n goes to infinity in a regular \nsequence of random markets, the proportion of employers who might profit from (any \ncombination of) preference or capacity manipulation goes to zero in the worker proposing \ndeferred acceptance algorithm.\n\nA second empirical observation made in the resident match data, and in the other matches \nin Table 1, "
+        },
+        {
+          "rank": 5,
+          "score": 0.0006492008687928319,
+          "scores": {
+            "final_score": 0.0006492008687928319,
+            "dense_score": 0.5036926647526432,
+            "bm25_score": null,
+            "fused_score": 0.012195121951219513,
+            "rerank_score": 0.0006492008687928319,
+            "fused_rank": 23,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 98,
+          "text_preview": "22\nExample 1' (Tie breaking can be inefficient): All preferences are as in Example \n1, except for those of w1, and let w1 be indifferent between any of m1, m2, m3.  Suppose, \nat step 0 of the deferred acceptance algorithm, the ties in w1's preferences are broken so \nas to produce the (artificial) strict preference P(w1) = m1, m2, m3.  Now the analysis is the \nsame as in Example 1, and the deferred"
+        }
+      ]
+    },
+    {
+      "query_id": "probability_bayes",
+      "query": "Bayes theorem with a worked example",
+      "domain": "knowledge",
+      "tags": [
+        "math",
+        "probability"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2365,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "Bayes",
+        "posterior"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.07796606421470642,
+          "scores": {
+            "final_score": 0.07796606421470642,
+            "dense_score": 0.543260446456925,
+            "bm25_score": 8.156553981520883,
+            "fused_score": 0.026013513513513515,
+            "rerank_score": 0.07796606421470642,
+            "fused_rank": 9,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 19,
+          "text_preview": "owing that, in the course of the deferred acceptance \nalgorithm, no man is ever rejected by a woman who could be matched to him at a stable \nmatching.\n\nThey also showed that the two theorems depend on the two-sided nature of the problem, \nby considering, in contrast, a one-sided \"roommates\" problem in which every agent has \npreferences over all other agents, and any two agents can be matched toget"
+        },
+        {
+          "rank": 2,
+          "score": 0.06315748393535614,
+          "scores": {
+            "final_score": 0.06315748393535614,
+            "dense_score": 0.5190613328605901,
+            "bm25_score": 13.882662827323083,
+            "fused_score": 0.02513227513227513,
+            "rerank_score": 0.06315748393535614,
+            "fused_rank": 13,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 37,
+          "text_preview": "of transferring any money at all between agents, m1 or m3 could give a penny \nto m2 from their gains, and the coalition of all the men would benefit.\n\nIn a model with many-to-one matching, e.g. between firms and workers, or colleges and \nstudents, suppose that, in Example 1, m1 and m2 were in fact one agent, m12 with two \npositions. Then the example makes clear that if m12 pursues m1 and m2\u2019s true"
+        },
+        {
+          "rank": 3,
+          "score": 0.05871307849884033,
+          "scores": {
+            "final_score": 0.05871307849884033,
+            "dense_score": null,
+            "bm25_score": 13.330898267787777,
+            "fused_score": 0.015625,
+            "rerank_score": 0.05871307849884033,
+            "fused_rank": 40,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 36,
+          "text_preview": "individuals remains, the \nhope that such mechanisms can also prevent coalitions from profitably colluding by mis-\nstating their preferences vanishes.\n\nTo formalize this we will have to consider more general models, with money and/or \nmany-to-one matching, but a good idea of what will generalize and what will not can be \nobtained by reexamining Example 1.  The reason that m1 and m3 don\u2019t get their "
+        },
+        {
+          "rank": 4,
+          "score": 0.029052307829260826,
+          "scores": {
+            "final_score": 0.029052307829260826,
+            "dense_score": 0.5417004119892672,
+            "bm25_score": 14.086910843894817,
+            "fused_score": 0.02946236559139785,
+            "rerank_score": 0.029052307829260826,
+            "fused_rank": 1,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 27,
+          "text_preview": "tching for the women). That is, there can be no matching (even an unstable matching) \nthat all men strictly prefer to the man-optimal stable matching.\n\nThe following example (also from Roth 1982a) shows that the theorem can't be \nstrengthened to strong Pareto optimality, i.e. it may be possible to make some men better \noff than at \u00b5M without making other men worse off.  This example will also be u"
+        },
+        {
+          "rank": 5,
+          "score": 0.018654512241482735,
+          "scores": {
+            "final_score": 0.018654512241482735,
+            "dense_score": null,
+            "bm25_score": 10.458812203777493,
+            "fused_score": 0.014285714285714285,
+            "rerank_score": 0.018654512241482735,
+            "fused_rank": 42,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 89,
+          "text_preview": "ption of the various \nimpossibility results; the presence of couples certainly doesn't make it easier to construct \nstrategy-proof stable mechanisms).\n\nHowever, one of the empirical observations of Roth and Peranson (1998) was that, in the \nlarge medical market studied there, with over 20,000 positions and almost that many \napplicants, the standard results seemed to provide a very good approximati"
+        }
+      ]
+    },
+    {
+      "query_id": "optimization_gradient",
+      "query": "Gradient descent convergence conditions",
+      "domain": "knowledge",
+      "tags": [
+        "math",
+        "optimization"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2176,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "gradient",
+        "descent"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.0014158834237605333,
+          "scores": {
+            "final_score": 0.0014158834237605333,
+            "dense_score": 0.48178755107024374,
+            "bm25_score": null,
+            "fused_score": 0.01,
+            "rerank_score": 0.0014158834237605333,
+            "fused_rank": 40,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 19,
+          "text_preview": "owing that, in the course of the deferred acceptance \nalgorithm, no man is ever rejected by a woman who could be matched to him at a stable \nmatching.\n\nThey also showed that the two theorems depend on the two-sided nature of the problem, \nby considering, in contrast, a one-sided \"roommates\" problem in which every agent has \npreferences over all other agents, and any two agents can be matched toget"
+        },
+        {
+          "rank": 2,
+          "score": 0.0011298954486846924,
+          "scores": {
+            "final_score": 0.0011298954486846924,
+            "dense_score": 0.5004439526053519,
+            "bm25_score": 10.329458731728714,
+            "fused_score": 0.03047794966520434,
+            "rerank_score": 0.0011298954486846924,
+            "fused_rank": 1,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 21,
+          "text_preview": "many-to-one \"college admissions\" model populated by a set of \ncolleges and a set of students that was identical to the marriage model except that each\n\n5 Sotomayor (1996) provides an equally simple nonconstructive proof of the nonemptiness of the set of \nstable matchings that connects stability with a broader notion of stability with respect to unmatched agents. \n6 While I will not discuss it here"
+        },
+        {
+          "rank": 3,
+          "score": 0.0010022616479545832,
+          "scores": {
+            "final_score": 0.0010022616479545832,
+            "dense_score": 0.49963964007777334,
+            "bm25_score": null,
+            "fused_score": 0.013888888888888888,
+            "rerank_score": 0.0010022616479545832,
+            "fused_rank": 12,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 101,
+          "text_preview": "ss\u201d that generalizes stable matchings.  He further observes that there is \nno mechanism that is Pareto efficient, reasonably fair, and strategy proof.\n\nTo understand Erdil and Ergin's approach, note that in Example 1', the Pareto \nimprovement from \u00b5M to \u00b5 arises from an exchange of positions between m1 and m3. The \nkey observation is that this exchange doesn't introduce any new blocking pairs, sin"
+        },
+        {
+          "rank": 4,
+          "score": 0.0009460931178182364,
+          "scores": {
+            "final_score": 0.0009460931178182364,
+            "dense_score": 0.48125973889064483,
+            "bm25_score": null,
+            "fused_score": 0.009615384615384616,
+            "rerank_score": 0.0009460931178182364,
+            "fused_rank": 44,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 45,
+          "text_preview": "matched. If the model was to \nbe a strategic game, colleges would also have strategies available that would not be \navailable in one-to-one matching.\n\nRoth (1985) examined a \u2018minimal\u2019 extension of the GS college admissions model that \nwould preserve the main properties of the marriage model to the extent possible, and \nallow strategic issues to be explored.  To this end, consider a model consistin"
+        },
+        {
+          "rank": 5,
+          "score": 0.0008923689019866288,
+          "scores": {
+            "final_score": 0.0008923689019866288,
+            "dense_score": 0.48297256794993515,
+            "bm25_score": null,
+            "fused_score": 0.01020408163265306,
+            "rerank_score": 0.0008923689019866288,
+            "fused_rank": 38,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 69,
+          "text_preview": "16\nRoth and Peranson (1999) reports on the new clearinghouse algorithm that we designed, a \ngeneralized applicant-proposing deferred acceptance algorithm that allows couples to \nstate preferences over pairs of positions, allows hospitals to specify reversions of \npositions, and deals with some other features of the market as well, such as allowing \nindividuals who need to arrange two consecutive p"
+        }
+      ]
+    },
+    {
+      "query_id": "transformer_attention",
+      "query": "Self-attention mechanism in transformers",
+      "domain": "knowledge",
+      "tags": [
+        "cs",
+        "ml"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2440,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "attention",
+        "transformer"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.0014161895960569382,
+          "scores": {
+            "final_score": 0.0014161895960569382,
+            "dense_score": 0.43103177108044216,
+            "bm25_score": 5.3401114284602,
+            "fused_score": 0.026785714285714288,
+            "rerank_score": 0.0014161895960569382,
+            "fused_rank": 10,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 104,
+          "text_preview": "that is Pareto dominated \n(from the point of view of students) by another stable matching, then there is a stable \nimprovement cycle starting from \u00b5 .\n\nErdil and Ergin show that, as a result, there is a computationally efficient algorithm that \nproduces stable matchings that are Pareto optimal with respect to students. The initial \nstep of the algorithm is a student-proposing deferred acceptance a"
+        },
+        {
+          "rank": 2,
+          "score": 0.0011064126156270504,
+          "scores": {
+            "final_score": 0.0011064126156270504,
+            "dense_score": 0.41400659753168895,
+            "bm25_score": 8.113473456199308,
+            "fused_score": 0.026399331662489554,
+            "rerank_score": 0.0011064126156270504,
+            "fused_rank": 12,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 30,
+          "text_preview": "7\nparticipants\u2019 stated rank order lists in such a way that it will never be in someone\u2019s \ninterest to submit a rank order list different from their true preferences?  The following \ntheorems show first that there are limits on what any mechanism that produces stable \nmatchings can accomplish in this regard, and then shows a sense in which the deferred \nacceptance algorithm performs up to those lim"
+        },
+        {
+          "rank": 3,
+          "score": 0.0009923464385792613,
+          "scores": {
+            "final_score": 0.0009923464385792613,
+            "dense_score": 0.41729268990725343,
+            "bm25_score": 4.931704997313171,
+            "fused_score": 0.023542445644647556,
+            "rerank_score": 0.0009923464385792613,
+            "fused_rank": 18,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 31,
+          "text_preview": "on the simplest \nof examples.  Consider the case of two men and two women, with preferences P given by \nP(m1) = w1, w2\n\nP(w1) = m2, m1\n\nP(m2) = w2, w1\n\nP(w2) = m1, m2 \nThen there are only two stable matchings, \u00b5M = [(m1,w1); (m2,w2)], and \u00b5W = [(m1,w2); \n(m2,w1)], and so any stable matching mechanism h must produce one of them when the \nstated preferences are P, i.e. h(P) equals \u00b5M or \u00b5W.  Suppose"
+        },
+        {
+          "rank": 4,
+          "score": 0.0009913527173921466,
+          "scores": {
+            "final_score": 0.0009913527173921466,
+            "dense_score": null,
+            "bm25_score": 8.289889661940503,
+            "fused_score": 0.01639344262295082,
+            "rerank_score": 0.0009913527173921466,
+            "fused_rank": 29,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 105,
+          "text_preview": "references. They show in fact that no mechanism that always produces a stable \nmatching that is Pareto optimal for the students can be strategy proof.\n\nAbdulkadiro\u011flu, Pathak and Roth (2007) show that no mechanism (stable or not, and \nPareto optimal or not) that is better for students than the student proposing deferred \nacceptance algorithm with tie breaking can be strategy proof. That is, we'll "
+        },
+        {
+          "rank": 5,
+          "score": 0.0009514693520031869,
+          "scores": {
+            "final_score": 0.0009514693520031869,
+            "dense_score": 0.4322941693554925,
+            "bm25_score": 5.978672912163644,
+            "fused_score": 0.028438886647841874,
+            "rerank_score": 0.0009514693520031869,
+            "fused_rank": 3,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 33,
+          "text_preview": "as to be \nmatched to his or her most preferred achievable mate under the true preferences at every \nstable matching under the mis-stated preferences.)\n\nIndeed, any agent who receives a mate less preferred than his or her optimal stable \nmatching could profitably manipulate by truncating his or her preference right after that \nmate. However it is possible to design the mechanism so that one side of"
+        }
+      ]
+    },
+    {
+      "query_id": "rag_basics",
+      "query": "Retrieval augmented generation pipeline",
+      "domain": "knowledge",
+      "tags": [
+        "cs",
+        "ml"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2226,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "retrieval",
+        "RAG"
+      ],
+      "expected_terms_found": [
+        "retrieval"
+      ],
+      "expected_terms_hit_rate": 0.5,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.0006076543941162527,
+          "scores": {
+            "final_score": 0.0006076543941162527,
+            "dense_score": 0.4860745714876672,
+            "bm25_score": null,
+            "fused_score": 0.010309278350515464,
+            "rerank_score": 0.0006076543941162527,
+            "fused_rank": 37,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 28,
+          "text_preview": "} with preferences given \nby :\n\nP(m1) = w2, w1, w3\n\nP(w1) = m1, m2, m3\n\nP(m2) = w1, w2, w3\n\nP(w2) = m3, m1, m2\n\nP(m3) = w1, w2, w3\n\nP(w3) = m1, m2, m3\n\nThen at \u00b5M = [(m1,w1); (m2,w3); (m3,w2)], m1 and m3 each receive their second \nchoice mate (while m2 receives his last choice).  But at the (unstable) matching \u00b5 = \n[(m1,w2); (m2,w3); (m3,w1)], m1 and m3 each receive their first choice, so they are"
+        },
+        {
+          "rank": 2,
+          "score": 0.0005692043341696262,
+          "scores": {
+            "final_score": 0.0005692043341696262,
+            "dense_score": 0.4973017616039287,
+            "bm25_score": null,
+            "fused_score": 0.012658227848101266,
+            "rerank_score": 0.0005692043341696262,
+            "fused_rank": 19,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 148,
+          "text_preview": "ankings have been updated in this way, the algorithm returns to the start of the matching \nphase, which examines the updated rankings for new matches.\n\nAny new tentative matches found in the matching phase replace prior tentative matches \ninvolving the same student.  (Note that new tentative matches can only improve a \nstudent's tentative assignment, since all lower ranked hospitals have been dele"
+        },
+        {
+          "rank": 3,
+          "score": 0.00044246172183193266,
+          "scores": {
+            "final_score": 0.00044246172183193266,
+            "dense_score": 0.4913368729263029,
+            "bm25_score": null,
+            "fused_score": 0.011363636363636364,
+            "rerank_score": 0.00044246172183193266,
+            "fused_rank": 28,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 104,
+          "text_preview": "that is Pareto dominated \n(from the point of view of students) by another stable matching, then there is a stable \nimprovement cycle starting from \u00b5 .\n\nErdil and Ergin show that, as a result, there is a computationally efficient algorithm that \nproduces stable matchings that are Pareto optimal with respect to students. The initial \nstep of the algorithm is a student-proposing deferred acceptance a"
+        },
+        {
+          "rank": 4,
+          "score": 0.0002925583685282618,
+          "scores": {
+            "final_score": 0.0002925583685282618,
+            "dense_score": 0.4897026871813367,
+            "bm25_score": null,
+            "fused_score": 0.011235955056179775,
+            "rerank_score": 0.0002925583685282618,
+            "fused_rank": 29,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 22,
+          "text_preview": "5\ncollege Ci wishes to be matched to qi \u2265 1 students, while each student is interested in \nbeing matched to only 1 college. That is, each student had a preference over colleges, \neach college had a preference over individual students, and a matching was a function \nthat assigned each student to no more than one college, and each college Ci to no more \nthan qi students. They observed that essential"
+        },
+        {
+          "rank": 5,
+          "score": 0.00021145849314052612,
+          "scores": {
+            "final_score": 0.00021145849314052612,
+            "dense_score": 0.47956647590407175,
+            "bm25_score": null,
+            "fused_score": 0.009345794392523364,
+            "rerank_score": 0.00021145849314052612,
+            "fused_rank": 47,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 146,
+          "text_preview": "dent's list any hospital that did not rank that student as acceptable.  The edited lists are \nthus rank orderings of mutually acceptable alternatives.\n\nThese lists are entered into a list-processing algorithm consisting of a matching phase \nand a tentative-assignment-and-update  phase.  The first step of the matching phase (the \n1:1 step) checks to see if there are any students and hospital progra"
+        }
+      ]
+    },
+    {
+      "query_id": "bm25_lexical",
+      "query": "BM25 ranking function term frequency",
+      "domain": "knowledge",
+      "tags": [
+        "cs",
+        "ir"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2390,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "BM25",
+        "term frequency"
+      ],
+      "expected_terms_found": [
+        "BM25"
+      ],
+      "expected_terms_hit_rate": 0.5,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.0010209763422608376,
+          "scores": {
+            "final_score": 0.0010209763422608376,
+            "dense_score": 0.4786376692397263,
+            "bm25_score": 16.195118248885652,
+            "fused_score": 0.031544957774465976,
+            "rerank_score": 0.0010209763422608376,
+            "fused_rank": 2,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 147,
+          "text_preview": "spital is kth ranked by the student.  At any \nstep where such matches are found, the algorithm proceeds to the tentative-assignment-\nand-update phase.\n\nWhen the algorithm enters the tentative-assignment-and-update phase from the k:1 step \nof the matching phase, the k:1 matches are tentatively made; i.e., each student who is a \ntop-ranked choice of his kth choice hospital is tentatively assigned to"
+        },
+        {
+          "rank": 2,
+          "score": 0.0005413760081864893,
+          "scores": {
+            "final_score": 0.0005413760081864893,
+            "dense_score": 0.4840869166721359,
+            "bm25_score": 15.227329181412864,
+            "fused_score": 0.03200204813108039,
+            "rerank_score": 0.0005413760081864893,
+            "fused_rank": 1,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 146,
+          "text_preview": "dent's list any hospital that did not rank that student as acceptable.  The edited lists are \nthus rank orderings of mutually acceptable alternatives.\n\nThese lists are entered into a list-processing algorithm consisting of a matching phase \nand a tentative-assignment-and-update  phase.  The first step of the matching phase (the \n1:1 step) checks to see if there are any students and hospital progra"
+        },
+        {
+          "rank": 3,
+          "score": 0.0005076118395663798,
+          "scores": {
+            "final_score": 0.0005076118395663798,
+            "dense_score": null,
+            "bm25_score": 9.428904532748025,
+            "fused_score": 0.015384615384615385,
+            "rerank_score": 0.0005076118395663798,
+            "fused_rank": 11,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 30,
+          "text_preview": "7\nparticipants\u2019 stated rank order lists in such a way that it will never be in someone\u2019s \ninterest to submit a rank order list different from their true preferences?  The following \ntheorems show first that there are limits on what any mechanism that produces stable \nmatchings can accomplish in this regard, and then shows a sense in which the deferred \nacceptance algorithm performs up to those lim"
+        },
+        {
+          "rank": 4,
+          "score": 0.0003568408137653023,
+          "scores": {
+            "final_score": 0.0003568408137653023,
+            "dense_score": 0.45517660270869886,
+            "bm25_score": null,
+            "fused_score": 0.01020408163265306,
+            "rerank_score": 0.0003568408137653023,
+            "fused_rank": 42,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 28,
+          "text_preview": "} with preferences given \nby :\n\nP(m1) = w2, w1, w3\n\nP(w1) = m1, m2, m3\n\nP(m2) = w1, w2, w3\n\nP(w2) = m3, m1, m2\n\nP(m3) = w1, w2, w3\n\nP(w3) = m1, m2, m3\n\nThen at \u00b5M = [(m1,w1); (m2,w3); (m3,w2)], m1 and m3 each receive their second \nchoice mate (while m2 receives his last choice).  But at the (unstable) matching \u00b5 = \n[(m1,w2); (m2,w3); (m3,w1)], m1 and m3 each receive their first choice, so they are"
+        },
+        {
+          "rank": 5,
+          "score": 0.00030699552735313773,
+          "scores": {
+            "final_score": 0.00030699552735313773,
+            "dense_score": 0.46013259214743046,
+            "bm25_score": null,
+            "fused_score": 0.011111111111111112,
+            "rerank_score": 0.00030699552735313773,
+            "fused_rank": 34,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 89,
+          "text_preview": "ption of the various \nimpossibility results; the presence of couples certainly doesn't make it easier to construct \nstrategy-proof stable mechanisms).\n\nHowever, one of the empirical observations of Roth and Peranson (1998) was that, in the \nlarge medical market studied there, with over 20,000 positions and almost that many \napplicants, the standard results seemed to provide a very good approximati"
+        }
+      ]
+    },
+    {
+      "query_id": "embeddings_dense",
+      "query": "Dense embeddings versus sparse retrieval",
+      "domain": "knowledge",
+      "tags": [
+        "cs",
+        "ir"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2234,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "embedding",
+        "dense"
+      ],
+      "expected_terms_found": [
+        "dense"
+      ],
+      "expected_terms_hit_rate": 0.5,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.0030870859045535326,
+          "scores": {
+            "final_score": 0.0030870859045535326,
+            "dense_score": 0.47514559368857906,
+            "bm25_score": null,
+            "fused_score": 0.009523809523809525,
+            "rerank_score": 0.0030870859045535326,
+            "fused_rank": 45,
+            "final_rank": 1
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 83,
+          "text_preview": "orem answers that question in the negative. (Note that the first \npart of the theorem is a straightforward generalization of the result of McVitie and\n\n27 A great deal can be learned by studying flawed existing allocation systems. In this connection see e.g. \nBalinski and Sonmez (1999), Ergin and Sonmez (2006), and Pathak and Sonmez (2007)."
+        },
+        {
+          "rank": 2,
+          "score": 0.0025565214455127716,
+          "scores": {
+            "final_score": 0.0025565214455127716,
+            "dense_score": 0.47790794001184,
+            "bm25_score": null,
+            "fused_score": 0.010101010101010102,
+            "rerank_score": 0.0025565214455127716,
+            "fused_rank": 39,
+            "final_rank": 2
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 21,
+          "text_preview": "many-to-one \"college admissions\" model populated by a set of \ncolleges and a set of students that was identical to the marriage model except that each\n\n5 Sotomayor (1996) provides an equally simple nonconstructive proof of the nonemptiness of the set of \nstable matchings that connects stability with a broader notion of stability with respect to unmatched agents. \n6 While I will not discuss it here"
+        },
+        {
+          "rank": 3,
+          "score": 0.001011607819236815,
+          "scores": {
+            "final_score": 0.001011607819236815,
+            "dense_score": 0.4722849095996864,
+            "bm25_score": null,
+            "fused_score": 0.009345794392523364,
+            "rerank_score": 0.001011607819236815,
+            "fused_rank": 47,
+            "final_rank": 3
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 23,
+          "text_preview": "oduced by the algorithm \nwould not admit any student-college blocking pairs defined precisely as for the marriage \nmodel.\n\n2. Subsequent developments:\n\nGS implicitly raised a number of interesting questions, and other new questions arose as \ngame theory developed and as the model was adapted and used to explore actual markets \nand design new ones.\n\n2.1 The marriage model"
+        },
+        {
+          "rank": 4,
+          "score": 0.0003814264200627804,
+          "scores": {
+            "final_score": 0.0003814264200627804,
+            "dense_score": 0.4858486110955876,
+            "bm25_score": null,
+            "fused_score": 0.011764705882352941,
+            "rerank_score": 0.0003814264200627804,
+            "fused_rank": 26,
+            "final_rank": 4
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 50,
+          "text_preview": "that capacity if they can get the \nstudents they prefer), but who were free to admit fewer students, and proved the \nfollowing impossibility result.12\n\nTheorem 12 (S\u00f6nmez, 1997) No stable matching mechanism makes it a dominant \nstrategy for a college to always reveal its capacity.\n\nBefore moving on to consider how deferred acceptance algorithms may function in \nmarkets, I should note that they hav"
+        },
+        {
+          "rank": 5,
+          "score": 0.0003749101306311786,
+          "scores": {
+            "final_score": 0.0003749101306311786,
+            "dense_score": 0.5099713963179664,
+            "bm25_score": null,
+            "fused_score": 0.015625,
+            "rerank_score": 0.0003749101306311786,
+            "fused_rank": 5,
+            "final_rank": 5
+          },
+          "source_path": "/Users/oscarbonnet/Documents/80\u201389 Knowledge Base/87 Indexed/GaleandShapley.revised.IJGT.pdf",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "knowledge_indexed_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 130,
+          "text_preview": "ility,\" SODA 2005, 53-62.\n\nIrving, Robert W. [1985] \"An efficient algorithm for the \"stable roommates\" \nproblem,\"  Journal of Algorithms, 6, 577--595.\n\nIrving, Robert W. [1998] \"Matching medical students to pairs of hospitals: a new \nvariation on an old theme', in Proceedings of ESA'98, the Sixth Annual European \nSymposium on Algorithms, Venice Italy, 1998, Lecture Notes in Computer Science, \nvol."
+        }
+      ]
+    },
+    {
+      "query_id": "gitlab_file_reader",
+      "query": "Where is the GitLab file reading function implemented?",
+      "domain": "code",
+      "tags": [
+        "code",
+        "mcp"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 4792,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "_read_gitlab_file_raw",
+        "base64"
+      ],
+      "expected_terms_found": [
+        "_read_gitlab_file_raw",
+        "base64"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [
+        "mcp_server.py"
+      ],
+      "expected_paths_found": [],
+      "expected_paths_hit": false,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.9626919627189636,
+          "scores": {
+            "final_score": 0.9626919627189636,
+            "dense_score": 0.5794075703635757,
+            "bm25_score": 13.175288659337903,
+            "fused_score": 0.058718367454640284,
+            "rerank_score": 0.9626919627189636,
+            "fused_rank": 33,
+            "final_rank": 1
+          },
+          "source_path": "docs/phases/PHASE_09_EVALUATION_AND_OBSERVABILITY.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 4,
+          "text_preview": "## Query set format\n\nCreate:\n\n```yaml\nqueries:\n  - id: pca_markets\n    query: \"Explain PCA in equity markets\"\n    domain: finance\n    expected_terms:\n      - PCA\n      - principal components\n      - equity\n    expected_paths_any:\n      - \"finance\"\n      - \"pca\"\n\n- id: black_scholes_greeks\n    query: \"Find notes about Black-Scholes delta and gamma\"\n    domain: finance\n    expected_terms:\n      - Bl"
+        },
+        {
+          "rank": 2,
+          "score": 0.9242660403251648,
+          "scores": {
+            "final_score": 0.9242660403251648,
+            "dense_score": 0.6473800878364094,
+            "bm25_score": 17.380713357552356,
+            "fused_score": 0.04858540454785828,
+            "rerank_score": 0.9242660403251648,
+            "fused_rank": 34,
+            "final_rank": 2
+          },
+          "source_path": "docs/phases/PHASE_02_STRUCTURE_AWARE_CHUNKING.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 25,
+          "text_preview": "### Desired output\n\nQuery:\n\n```text\nHow is GitLab file reading implemented?\n```\n\nShould retrieve chunk with metadata:\n\n```json\n{\n  \"symbol_name\": \"_read_gitlab_file_raw\",\n  \"symbol_type\": \"function\",\n  \"file_path\": \"src/mcp_server/mcp_server.py\"\n}\n```\n\n---"
+        },
+        {
+          "rank": 3,
+          "score": 0.6191927194595337,
+          "scores": {
+            "final_score": 0.6191927194595337,
+            "dense_score": 0.5395355861991469,
+            "bm25_score": 4.494282490841409,
+            "fused_score": 0.09968237704918033,
+            "rerank_score": 0.6191927194595337,
+            "fused_rank": 17,
+            "final_rank": 3
+          },
+          "source_path": "tests/test_hybrid_retrieval.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_bm25_retrieves_symbol_name_from_metadata_only",
+          "symbol_type": "function",
+          "start_line": 80,
+          "end_line": 98,
+          "chunk_index": 4,
+          "text_preview": "def test_bm25_retrieves_symbol_name_from_metadata_only(tmp_path):\n    index_path = tmp_path / \"bm25.jsonl\"\n    documents = [\n        Document(\n            text=\"implementation details without the function token\",\n            metadata={\n                \"chunk_id\": \"function\",\n                \"symbol_name\": \"_read_gitlab_file_raw\",\n                \"symbol_type\": \"function\",\n            },\n        ),"
+        },
+        {
+          "rank": 4,
+          "score": 0.4672795832157135,
+          "scores": {
+            "final_score": 0.4672795832157135,
+            "dense_score": 0.509494300813165,
+            "bm25_score": 12.567869156383606,
+            "fused_score": 0.031241266767805816,
+            "rerank_score": 0.4672795832157135,
+            "fused_rank": 37,
+            "final_rank": 4
+          },
+          "source_path": "docs/phases/PHASE_07_CODE_AWARE_REPO_RETRIEVAL.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 19,
+          "text_preview": "## Connection to the rest of the system\n\nCode retrieval should be separate from knowledge retrieval:\n\n```text\nretrieve_knowledge \u2192 notes/books/articles\nretrieve_code      \u2192 repos/source/tests/config\nread_local_file    \u2192 exact file read when needed\n```\n\nThe LLM can combine both:\n\n```text\nretrieve_skills(\"python debugging\")\nretrieve_code(\"where is _read_gitlab_file_raw\")\nread_code_symbol(...)\n```\n\n-"
+        },
+        {
+          "rank": 5,
+          "score": 0.31464695930480957,
+          "scores": {
+            "final_score": 0.31464695930480957,
+            "dense_score": 0.5580202559098505,
+            "bm25_score": 4.059904921425862,
+            "fused_score": 0.10103989813242784,
+            "rerank_score": 0.31464695930480957,
+            "fused_rank": 16,
+            "final_rank": 5
+          },
+          "source_path": "tests/test_hybrid_retrieval.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_bm25_retrieves_exact_function_name",
+          "symbol_type": "function",
+          "start_line": 43,
+          "end_line": 61,
+          "chunk_index": 2,
+          "text_preview": "def test_bm25_retrieves_exact_function_name(tmp_path):\n    index_path = tmp_path / \"bm25.jsonl\"\n    documents = [\n        Document(\n            text=\"def _read_gitlab_file_raw(project_id, file_path): pass\",\n            metadata={\"chunk_id\": \"function\", \"symbol_name\": \"_read_gitlab_file_raw\"},\n        ),\n        Document(\n            text=\"general architecture notes\",\n            metadata={\"chunk_i"
+        }
+      ]
+    },
+    {
+      "query_id": "hybrid_fusion",
+      "query": "Reciprocal rank fusion implementation",
+      "domain": "code",
+      "tags": [
+        "code",
+        "retrieval"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2734,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "rrf",
+        "fuse_candidates"
+      ],
+      "expected_terms_found": [
+        "rrf",
+        "fuse_candidates"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [
+        "hybrid.py"
+      ],
+      "expected_paths_found": [],
+      "expected_paths_hit": false,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.8868813514709473,
+          "scores": {
+            "final_score": 0.8868813514709473,
+            "dense_score": 0.5817041194164362,
+            "bm25_score": 14.485152677091097,
+            "fused_score": 0.06147540983606558,
+            "rerank_score": 0.8868813514709473,
+            "fused_rank": 32,
+            "final_rank": 1
+          },
+          "source_path": "docs/phases/PHASE_04_BM25_HYBRID_RETRIEVAL.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 6,
+          "text_preview": "## Reciprocal Rank Fusion\n\nUse RRF to combine rankings:\n\n```python\ndef rrf_score(rank: int, k: int = 60) -> float:\n    return 1.0 / (k + rank)\n```\n\nFor each candidate:\n\n```text\nscore = sum(rrf_score(rank_in_each_retriever))\n```\n\nBenefits:\n\n```text\nsimple\nrobust\nno need to calibrate dense and BM25 scores\nworks well as a first fusion method\n```\n\n---"
+        },
+        {
+          "rank": 2,
+          "score": 0.4418395161628723,
+          "scores": {
+            "final_score": 0.4418395161628723,
+            "dense_score": 0.53770234229125,
+            "bm25_score": 11.988124643733098,
+            "fused_score": 0.047100327853818465,
+            "rerank_score": 0.4418395161628723,
+            "fused_rank": 34,
+            "final_rank": 2
+          },
+          "source_path": "docs/ARCHITECTURE.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 16,
+          "text_preview": "## 5. Target retrieval architecture\n\nThe target system should not rely on dense retrieval alone.\n\nTarget pipeline:\n\n```text\nUser query\n  \u2193\nquery normalization / optional query expansion\n  \u2193\nDense retrieval with embedding model\n  +\nBM25 lexical retrieval\n  \u2193\nCandidate fusion, usually Reciprocal Rank Fusion\n  \u2193\nCross-encoder reranking with BGE-reranker-v2-m3\n  \u2193\nReturn top N chunks with metadata to "
+        },
+        {
+          "rank": 3,
+          "score": 0.43624910712242126,
+          "scores": {
+            "final_score": 0.43624910712242126,
+            "dense_score": 0.48851370690683565,
+            "bm25_score": 13.899305935915587,
+            "fused_score": 0.05695561754157099,
+            "rerank_score": 0.43624910712242126,
+            "fused_rank": 33,
+            "final_rank": 3
+          },
+          "source_path": "docs/phases/PHASE_04_BM25_HYBRID_RETRIEVAL.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 2,
+          "text_preview": "## Desired architecture\n\n```text\nquery\n  \u2193\nDense retriever: Chroma + embedding model\n  \u2193\nDense candidates\n\nquery\n  \u2193\nBM25 retriever: lexical index\n  \u2193\nBM25 candidates\n\nDense + BM25 candidates\n  \u2193\nFusion, usually Reciprocal Rank Fusion\n  \u2193\nTop fused candidates\n  \u2193\nOptional reranker in next phase\n```\n\n---"
+        },
+        {
+          "rank": 4,
+          "score": 0.20846769213676453,
+          "scores": {
+            "final_score": 0.20846769213676453,
+            "dense_score": 0.48024254404418376,
+            "bm25_score": 9.20557759150991,
+            "fused_score": 0.07583333333333334,
+            "rerank_score": 0.20846769213676453,
+            "fused_rank": 21,
+            "final_rank": 4
+          },
+          "source_path": "tests/test_hybrid_retrieval.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_rrf_fusion_deduplicates_chunks",
+          "symbol_type": "function",
+          "start_line": 9,
+          "end_line": 40,
+          "chunk_index": 1,
+          "text_preview": "def test_rrf_fusion_deduplicates_chunks():\n    dense = [\n        Candidate(\n            chunk_id=\"a\",\n            text=\"dense text\",\n            metadata={\"chunk_id\": \"a\"},\n            score=0.8,\n            source=\"dense\",\n            rank=1,\n            dense_score=0.8,\n            retrieval_sources={\"dense\"},\n        )\n    ]\n    bm25 = [\n        Candidate(\n            chunk_id=\"a\",\n            "
+        },
+        {
+          "rank": 5,
+          "score": 0.15096859633922577,
+          "scores": {
+            "final_score": 0.15096859633922577,
+            "dense_score": 0.4965516570261588,
+            "bm25_score": 14.534782668460554,
+            "fused_score": 0.021610696517412938,
+            "rerank_score": 0.15096859633922577,
+            "fused_rank": 43,
+            "final_rank": 5
+          },
+          "source_path": "docs/phases/PHASE_05_RERANKING.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 5,
+          "text_preview": "## Candidate object\n\nThe reranker should receive candidates after fusion.\n\nCandidate fields:\n\n```python\n@dataclass\nclass Candidate:\n    chunk_id: str\n    text: str\n    metadata: dict[str, Any]\n    dense_score: float | None = None\n    bm25_score: float | None = None\n    fused_score: float | None = None\n    rerank_score: float | None = None\n    rank: int | None = None\n    sources: list[str] = field("
+        }
+      ]
+    },
+    {
+      "query_id": "bm25_store_code",
+      "query": "BM25 index store load and write",
+      "domain": "code",
+      "tags": [
+        "code",
+        "retrieval"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 6769,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "bm25",
+        "load_bm25_index"
+      ],
+      "expected_terms_found": [
+        "bm25",
+        "load_bm25_index"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [
+        "bm25_store.py"
+      ],
+      "expected_paths_found": [],
+      "expected_paths_hit": false,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.9650393128395081,
+          "scores": {
+            "final_score": 0.9650393128395081,
+            "dense_score": null,
+            "bm25_score": 14.517923009791788,
+            "fused_score": 0.04821428571428572,
+            "rerank_score": 0.9650393128395081,
+            "fused_rank": 16,
+            "final_rank": 1
+          },
+          "source_path": "src/mcp_server/mcp_server.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "_rebuild_all_indexes",
+          "symbol_type": "function",
+          "start_line": 1256,
+          "end_line": 1353,
+          "chunk_index": 102,
+          "text_preview": "def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:\n    global code_index, skills_index, knowledge_index, memory_index, INDEX_STATUS\n\n    knowledge_paths = _get_knowledge_paths()\n    skills_collection_name = _collection_name(\"skills\")\n    knowledge_collection_name = _collection_name(\"knowledge\")\n    memory_collection_name = _collection_name(\"memory\")\n    code_collection_name ="
+        },
+        {
+          "rank": 2,
+          "score": 0.9543371200561523,
+          "scores": {
+            "final_score": 0.9543371200561523,
+            "dense_score": 0.5068127315259873,
+            "bm25_score": null,
+            "fused_score": 0.0396551724137931,
+            "rerank_score": 0.9543371200561523,
+            "fused_rank": 26,
+            "final_rank": 2
+          },
+          "source_path": "tests/test_hybrid_retrieval.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_bm25_retrieves_exact_function_name",
+          "symbol_type": "function",
+          "start_line": 43,
+          "end_line": 61,
+          "chunk_index": 2,
+          "text_preview": "def test_bm25_retrieves_exact_function_name(tmp_path):\n    index_path = tmp_path / \"bm25.jsonl\"\n    documents = [\n        Document(\n            text=\"def _read_gitlab_file_raw(project_id, file_path): pass\",\n            metadata={\"chunk_id\": \"function\", \"symbol_name\": \"_read_gitlab_file_raw\"},\n        ),\n        Document(\n            text=\"general architecture notes\",\n            metadata={\"chunk_i"
+        },
+        {
+          "rank": 3,
+          "score": 0.9541061520576477,
+          "scores": {
+            "final_score": 0.9541061520576477,
+            "dense_score": 0.517828632568589,
+            "bm25_score": null,
+            "fused_score": 0.043125,
+            "rerank_score": 0.9541061520576477,
+            "fused_rank": 23,
+            "final_rank": 3
+          },
+          "source_path": "tests/test_hybrid_retrieval.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_bm25_retrieves_exact_file_path",
+          "symbol_type": "function",
+          "start_line": 64,
+          "end_line": 77,
+          "chunk_index": 3,
+          "text_preview": "def test_bm25_retrieves_exact_file_path(tmp_path):\n    index_path = tmp_path / \"bm25.jsonl\"\n    documents = [\n        Document(\n            text=\"Configuration notes\",\n            metadata={\"chunk_id\": \"path\", \"file_path\": \"src/mcp_server/mcp_server.py\"},\n        ),\n        Document(text=\"unrelated text\", metadata={\"chunk_id\": \"other\"}),\n    ]\n    write_bm25_index(index_path, documents)\n\n    resul"
+        },
+        {
+          "rank": 4,
+          "score": 0.9515932202339172,
+          "scores": {
+            "final_score": 0.9515932202339172,
+            "dense_score": 0.5165445460841892,
+            "bm25_score": null,
+            "fused_score": 0.042592592592592585,
+            "rerank_score": 0.9515932202339172,
+            "fused_rank": 24,
+            "final_rank": 4
+          },
+          "source_path": "tests/test_hybrid_retrieval.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_bm25_retrieves_section_path_from_metadata_only",
+          "symbol_type": "function",
+          "start_line": 101,
+          "end_line": 114,
+          "chunk_index": 5,
+          "text_preview": "def test_bm25_retrieves_section_path_from_metadata_only(tmp_path):\n    index_path = tmp_path / \"bm25.jsonl\"\n    documents = [\n        Document(\n            text=\"content does not contain the heading token\",\n            metadata={\"chunk_id\": \"section\", \"section_path\": \"Architecture / MCP Tools\"},\n        ),\n        Document(text=\"unrelated text\", metadata={\"chunk_id\": \"other\"}),\n    ]\n    write_bm2"
+        },
+        {
+          "rank": 5,
+          "score": 0.9501913189888,
+          "scores": {
+            "final_score": 0.9501913189888,
+            "dense_score": 0.517927193865762,
+            "bm25_score": null,
+            "fused_score": 0.044230769230769226,
+            "rerank_score": 0.9501913189888,
+            "fused_rank": 22,
+            "final_rank": 5
+          },
+          "source_path": "tests/test_hybrid_retrieval.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_bm25_retrieves_key_path_from_metadata_only",
+          "symbol_type": "function",
+          "start_line": 117,
+          "end_line": 134,
+          "chunk_index": 6,
+          "text_preview": "def test_bm25_retrieves_key_path_from_metadata_only(tmp_path):\n    index_path = tmp_path / \"bm25.jsonl\"\n    documents = [\n        Document(\n            text=\"configuration value without the queried path\",\n            metadata={\"chunk_id\": \"key\", \"key_path\": \"retrieval.defaults.knowledge_top_k\"},\n        ),\n        Document(text=\"unrelated text\", metadata={\"chunk_id\": \"other\"}),\n    ]\n    write_bm2"
+        }
+      ]
+    },
+    {
+      "query_id": "reranker_code",
+      "query": "Cross encoder reranker fallback",
+      "domain": "code",
+      "tags": [
+        "code",
+        "retrieval"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 3834,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "rerank",
+        "CrossEncoder"
+      ],
+      "expected_terms_found": [
+        "rerank"
+      ],
+      "expected_terms_hit_rate": 0.5,
+      "expected_paths_any": [
+        "rerankers.py"
+      ],
+      "expected_paths_found": [
+        "rerankers.py"
+      ],
+      "expected_paths_hit": true,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.711122453212738,
+          "scores": {
+            "final_score": 0.711122453212738,
+            "dense_score": 0.541673452296536,
+            "bm25_score": 9.233419481810264,
+            "fused_score": 0.08319777397260272,
+            "rerank_score": 0.711122453212738,
+            "fused_rank": 16,
+            "final_rank": 1
+          },
+          "source_path": "tests/test_rerankers.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_reranker_failure_falls_back_to_fusion",
+          "symbol_type": "function",
+          "start_line": 80,
+          "end_line": 103,
+          "chunk_index": 9,
+          "text_preview": "def test_reranker_failure_falls_back_to_fusion(caplog):\n    candidates = [\n        _candidate(\"a\", \"alpha\", 0.3, 1),\n        _candidate(\"b\", \"beta\", 0.2, 2),\n    ]\n\n    with caplog.at_level(logging.WARNING):\n        results = rerank_or_fallback(\n            \"query\",\n            candidates,\n            enabled=True,\n            provider=\"local_huggingface\",\n            model=\"BAAI/bge-reranker-v2-m"
+        },
+        {
+          "rank": 2,
+          "score": 0.6526443958282471,
+          "scores": {
+            "final_score": 0.6526443958282471,
+            "dense_score": null,
+            "bm25_score": 4.607505688141095,
+            "fused_score": 0.03552631578947369,
+            "rerank_score": 0.6526443958282471,
+            "fused_rank": 13,
+            "final_rank": 2
+          },
+          "source_path": "src/mcp_server/mcp_server.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "_knowledge_debug_payload",
+          "symbol_type": "function",
+          "start_line": 1210,
+          "end_line": 1253,
+          "chunk_index": 101,
+          "text_preview": "def _knowledge_debug_payload(query: str, final_top_k: int) -> dict[str, Any]:\n    assert knowledge_index is not None\n\n    knowledge_collection_name = _collection_name(\"knowledge\")\n    dense_k = max(final_top_k, _dense_top_k())\n    bm25_k = max(final_top_k, _bm25_top_k())\n    fused_k = max(final_top_k, _fused_top_k())\n\n    dense_retriever = knowledge_index.as_retriever(similarity_top_k=dense_k)\n   "
+        },
+        {
+          "rank": 3,
+          "score": 0.626859188079834,
+          "scores": {
+            "final_score": 0.626859188079834,
+            "dense_score": 0.5456161294582583,
+            "bm25_score": 10.94810468902141,
+            "fused_score": 0.17154394938753537,
+            "rerank_score": 0.626859188079834,
+            "fused_rank": 2,
+            "final_rank": 3
+          },
+          "source_path": "src/mcp_server/retrieval/rerankers.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "rerank_or_fallback",
+          "symbol_type": "function",
+          "start_line": 83,
+          "end_line": 112,
+          "chunk_index": 10,
+          "text_preview": "def rerank_or_fallback(\n    query: str,\n    candidates: list[Candidate],\n    *,\n    enabled: bool,\n    provider: str,\n    model: str,\n    candidate_top_k: int,\n    final_top_k: int,\n    batch_size: int,\n    logger: logging.Logger | None = None,\n    reranker: Reranker | None = None,\n) -> list[Candidate]:\n    if not enabled:\n        return apply_final_ranks(candidates[:final_top_k])\n\n    try:\n      "
+        },
+        {
+          "rank": 4,
+          "score": 0.5453783273696899,
+          "scores": {
+            "final_score": 0.5453783273696899,
+            "dense_score": null,
+            "bm25_score": 4.795653432721435,
+            "fused_score": 0.03584070796460177,
+            "rerank_score": 0.5453783273696899,
+            "fused_rank": 11,
+            "final_rank": 4
+          },
+          "source_path": "src/mcp_server/mcp_server.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "retrieve_knowledge_debug",
+          "symbol_type": "function",
+          "start_line": 1647,
+          "end_line": 1681,
+          "chunk_index": 120,
+          "text_preview": "def retrieve_knowledge_debug(query: str, top_k: int | None = None) -> dict[str, Any]:\n    \"\"\"Retrieve knowledge with dense, BM25, and fused diagnostic candidates.\"\"\"\n    _ensure_indexes()\n\n    assert knowledge_index is not None\n\n    k = _knowledge_final_top_k(top_k)\n\n    if _bm25_enabled():\n        return _knowledge_debug_payload(query, k)\n\n    dense_k = max(k, _reranker_candidate_top_k())\n    den"
+        },
+        {
+          "rank": 5,
+          "score": 0.36608436703681946,
+          "scores": {
+            "final_score": 0.36608436703681946,
+            "dense_score": 0.5332980249839562,
+            "bm25_score": 7.547440366251856,
+            "fused_score": 0.07830034043626276,
+            "rerank_score": 0.36608436703681946,
+            "fused_rank": 17,
+            "final_rank": 5
+          },
+          "source_path": "tests/test_rerankers.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_reranker_can_be_disabled",
+          "symbol_type": "function",
+          "start_line": 129,
+          "end_line": 149,
+          "chunk_index": 11,
+          "text_preview": "def test_reranker_can_be_disabled():\n    candidates = [\n        _candidate(\"a\", \"alpha\", 0.3, 1),\n        _candidate(\"b\", \"beta\", 0.2, 2),\n    ]\n\n    results = rerank_or_fallback(\n        \"query\",\n        candidates,\n        enabled=False,\n        provider=\"local_huggingface\",\n        model=\"BAAI/bge-reranker-v2-m3\",\n        candidate_top_k=2,\n        final_top_k=1,\n        batch_size=2,\n        r"
+        }
+      ]
+    },
+    {
+      "query_id": "manifest_change_detection",
+      "query": "Detect added edited deleted files in manifest",
+      "domain": "code",
+      "tags": [
+        "code",
+        "indexing"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 6340,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "detect_changes",
+        "manifest"
+      ],
+      "expected_terms_found": [
+        "detect_changes",
+        "manifest"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [
+        "manifest.py"
+      ],
+      "expected_paths_found": [
+        "manifest.py"
+      ],
+      "expected_paths_hit": true,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.9271833300590515,
+          "scores": {
+            "final_score": 0.9271833300590515,
+            "dense_score": 0.4895406883155,
+            "bm25_score": 10.324552742306436,
+            "fused_score": 0.2543055307715876,
+            "rerank_score": 0.9271833300590515,
+            "fused_rank": 21,
+            "final_rank": 1
+          },
+          "source_path": "tests/test_manifest.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_added_file_detected",
+          "symbol_type": "function",
+          "start_line": 49,
+          "end_line": 60,
+          "chunk_index": 4,
+          "text_preview": "def test_added_file_detected(tmp_path):\n    db_path = tmp_path / \"manifest.sqlite\"\n    init_manifest_db(db_path)\n    (tmp_path / \"added.md\").write_text(\"# Added\\n\", encoding=\"utf-8\")\n\n    changes = changes_for(db_path, tmp_path)\n\n    assert [item[\"path\"] for item in changes[\"added\"]] == [str(tmp_path / \"added.md\")]\n    assert changes[\"edited\"] == []\n    assert changes[\"config_changed\"] == []\n    a"
+        },
+        {
+          "rank": 2,
+          "score": 0.9191854000091553,
+          "scores": {
+            "final_score": 0.9191854000091553,
+            "dense_score": 0.5115430713889939,
+            "bm25_score": 13.55610200397331,
+            "fused_score": 0.047083922461946655,
+            "rerank_score": 0.9191854000091553,
+            "fused_rank": 34,
+            "final_rank": 2
+          },
+          "source_path": "docs/phases/PHASE_03_INCREMENTAL_INDEXING_MANIFEST.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 1,
+          "text_preview": "## Objective\n\nPrevent unnecessary re-indexing and re-embedding by tracking what has already been indexed.\n\nThis phase is required before using expensive/cloud embedding backends and highly recommended before indexing large local corpora.\n\nCurrent behavior:\n\n```text\nrebuild_indexes()\n  \u2192 parse all files\n  \u2192 embed all chunks\n  \u2192 recreate collections\n```\n\nTarget behavior:\n\n```text\nscan files\n  \u2192 dete"
+        },
+        {
+          "rank": 3,
+          "score": 0.9031551480293274,
+          "scores": {
+            "final_score": 0.9031551480293274,
+            "dense_score": 0.4841391449193546,
+            "bm25_score": 10.486742076382951,
+            "fused_score": 0.29074357707509885,
+            "rerank_score": 0.9031551480293274,
+            "fused_rank": 1,
+            "final_rank": 3
+          },
+          "source_path": "src/mcp_server/retrieval/manifest.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "detect_changes",
+          "symbol_type": "function",
+          "start_line": 322,
+          "end_line": 445,
+          "chunk_index": 18,
+          "text_preview": "def detect_changes(\n    profile: str,\n    scanned_files: list[ScannedFile],\n    manifest_files: list[ManifestFile],\n    *,\n    collection_name: str | None = None,\n    embedding_config_fingerprint: str | None = None,\n    chunking_profile: str | None = None,\n    embedding_profile: str | None = None,\n) -> dict[str, list[dict[str, Any]]]:\n    active_manifest = [\n        item for item in manifest_files"
+        },
+        {
+          "rank": 4,
+          "score": 0.8679013252258301,
+          "scores": {
+            "final_score": 0.8679013252258301,
+            "dense_score": null,
+            "bm25_score": 12.75177635932078,
+            "fused_score": 0.2541603708791209,
+            "rerank_score": 0.8679013252258301,
+            "fused_rank": 2,
+            "final_rank": 4
+          },
+          "source_path": "src/mcp_server/mcp_server.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "list_changed_files",
+          "symbol_type": "function",
+          "start_line": 1553,
+          "end_line": 1562,
+          "chunk_index": 113,
+          "text_preview": "def list_changed_files(profile: str | None = None) -> dict[str, list[dict[str, Any]]]:\n    \"\"\"List changed files grouped by added, edited, deleted, and moved.\"\"\"\n    status = scan_index_changes(profile)\n    return {\n        \"added\": status[\"added\"],\n        \"edited\": status[\"edited\"],\n        \"config_changed\": status[\"config_changed\"],\n        \"deleted\": status[\"deleted\"],\n        \"moved\": status["
+        },
+        {
+          "rank": 5,
+          "score": 0.8168050050735474,
+          "scores": {
+            "final_score": 0.8168050050735474,
+            "dense_score": null,
+            "bm25_score": 12.515853496548228,
+            "fused_score": 0.2502338286713287,
+            "rerank_score": 0.8168050050735474,
+            "fused_rank": 3,
+            "final_rank": 5
+          },
+          "source_path": "src/mcp_server/mcp_server.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "scan_index_changes",
+          "symbol_type": "function",
+          "start_line": 1501,
+          "end_line": 1541,
+          "chunk_index": 111,
+          "text_preview": "def scan_index_changes(profile: str | None = None) -> dict[str, Any]:\n    \"\"\"Dry-run scan for knowledge files that need indexing.\"\"\"\n    selected_profile = profile or KNOWLEDGE_PROFILE\n    collection_name = _get_profile_collection_name(selected_profile)\n    init_manifest_db(MANIFEST_DB_PATH)\n\n    scanned_files = _scan_profile_files(selected_profile)\n    manifest_files = get_files_for_profile(MANIF"
+        }
+      ]
+    },
+    {
+      "query_id": "code_chunker_ast",
+      "query": "Python AST chunker for classes and functions",
+      "domain": "code",
+      "tags": [
+        "code",
+        "chunking"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 2821,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "ast",
+        "symbol"
+      ],
+      "expected_terms_found": [
+        "ast",
+        "symbol"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [
+        "code_chunker.py"
+      ],
+      "expected_paths_found": [
+        "code_chunker.py"
+      ],
+      "expected_paths_hit": true,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.9244028329849243,
+          "scores": {
+            "final_score": 0.9244028329849243,
+            "dense_score": 0.6120736489570197,
+            "bm25_score": null,
+            "fused_score": 0.05227272727272727,
+            "rerank_score": 0.9244028329849243,
+            "fused_rank": 42,
+            "final_rank": 1
+          },
+          "source_path": "tests/test_chunkers.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_python_chunker_extracts_function_and_class_names",
+          "symbol_type": "function",
+          "start_line": 30,
+          "end_line": 44,
+          "chunk_index": 3,
+          "text_preview": "def test_python_chunker_extracts_function_and_class_names():\n    chunks = chunk_file(FIXTURES / \"code\" / \"sample.py\")\n\n    symbols = {\n        chunk.metadata.get(\"symbol_name\"): chunk.metadata\n        for chunk in chunks\n        if chunk.metadata.get(\"symbol_name\")\n    }\n\n    assert symbols[\"load_config\"][\"symbol_type\"] == \"function\"\n    assert symbols[\"Worker\"][\"symbol_type\"] == \"class\"\n    asser"
+        },
+        {
+          "rank": 2,
+          "score": 0.8983724117279053,
+          "scores": {
+            "final_score": 0.8983724117279053,
+            "dense_score": 0.578459280378786,
+            "bm25_score": null,
+            "fused_score": 0.03165137614678899,
+            "rerank_score": 0.8983724117279053,
+            "fused_rank": 50,
+            "final_rank": 2
+          },
+          "source_path": "tests/test_code_retrieval.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "test_python_code_chunker_extracts_classes_functions_methods_and_imports",
+          "symbol_type": "function",
+          "start_line": 30,
+          "end_line": 57,
+          "chunk_index": 2,
+          "text_preview": "def test_python_code_chunker_extracts_classes_functions_methods_and_imports(tmp_path):\n    path = tmp_path / \"repo\" / \"src\" / \"service.py\"\n    path.parent.mkdir(parents=True)\n    path.write_text(CLASS_SOURCE + \"\\n\", encoding=\"utf-8\")\n\n    chunks = chunk_python_code(\n        path,\n        repo_name=\"repo\",\n        relative_path=\"src/service.py\",\n        max_chars=2000,\n        overlap_chars=0,\n    "
+        },
+        {
+          "rank": 3,
+          "score": 0.8889254331588745,
+          "scores": {
+            "final_score": 0.8889254331588745,
+            "dense_score": 0.6114629278262196,
+            "bm25_score": 17.602115291810982,
+            "fused_score": 0.18259061833688703,
+            "rerank_score": 0.8889254331588745,
+            "fused_rank": 1,
+            "final_rank": 3
+          },
+          "source_path": "src/mcp_server/retrieval/code_chunker.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "chunk_python_code",
+          "symbol_type": "function",
+          "start_line": 125,
+          "end_line": 317,
+          "chunk_index": 11,
+          "text_preview": "def chunk_python_code(\n    path: str | Path,\n    *,\n    repo_name: str,\n    relative_path: str,\n    max_chars: int = 3000,\n    overlap_chars: int = 300,\n    include_full_class_chunks: bool = False,\n    include_method_chunks: bool = True,\n) -> list[Chunk]:\n    path = Path(path)\n    text = path.read_text(encoding=\"utf-8\", errors=\"replace\")\n    lines = text.splitlines()\n\n    try:\n        tree = ast.p"
+        },
+        {
+          "rank": 4,
+          "score": 0.8700774312019348,
+          "scores": {
+            "final_score": 0.8700774312019348,
+            "dense_score": 0.6122815794087039,
+            "bm25_score": 17.496342007604692,
+            "fused_score": 0.1193499458288191,
+            "rerank_score": 0.8700774312019348,
+            "fused_rank": 3,
+            "final_rank": 4
+          },
+          "source_path": "src/mcp_server/retrieval/chunkers.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "chunk_python",
+          "symbol_type": "function",
+          "start_line": 230,
+          "end_line": 331,
+          "chunk_index": 13,
+          "text_preview": "def chunk_python(\n    path: str | Path,\n    text: str,\n    *,\n    max_chars: int = 3000,\n    overlap_chars: int = 300,\n    base_metadata: dict[str, Any] | None = None,\n) -> list[Chunk]:\n    source_path = str(path)\n    extension = Path(path).suffix.lower()\n    lines = text.splitlines()\n\n    try:\n        tree = ast.parse(text)\n    except SyntaxError:\n        return chunk_text(\n            path,\n    "
+        },
+        {
+          "rank": 5,
+          "score": 0.3831416070461273,
+          "scores": {
+            "final_score": 0.3831416070461273,
+            "dense_score": 0.5917106109255926,
+            "bm25_score": null,
+            "fused_score": 0.04821428571428572,
+            "rerank_score": 0.3831416070461273,
+            "fused_rank": 33,
+            "final_rank": 5
+          },
+          "source_path": "src/mcp_server/retrieval/code_chunker.py",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": "chunk_code_file",
+          "symbol_type": "function",
+          "start_line": 320,
+          "end_line": 371,
+          "chunk_index": 12,
+          "text_preview": "def chunk_code_file(\n    path: str | Path,\n    *,\n    repo_name: str,\n    relative_path: str,\n    max_chars: int = 3000,\n    overlap_chars: int = 300,\n    include_full_class_chunks: bool = False,\n    include_method_chunks: bool = True,\n) -> list[Chunk]:\n    path = Path(path)\n    extension = path.suffix.lower()\n    metadata = _base_code_metadata(path, relative_path, repo_name)\n\n    if extension == "
+        }
+      ]
+    },
+    {
+      "query_id": "collection_naming",
+      "query": "ChromaDB collection name includes embedding model",
+      "domain": "code",
+      "tags": [
+        "code",
+        "mcp"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 3861,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "hybrid+rerank",
+      "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "collection",
+        "embedding"
+      ],
+      "expected_terms_found": [
+        "collection",
+        "embedding"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [
+        "mcp_server.py"
+      ],
+      "expected_paths_found": [],
+      "expected_paths_hit": false,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.9843388795852661,
+          "scores": {
+            "final_score": 0.9843388795852661,
+            "dense_score": 0.6757946251074077,
+            "bm25_score": 8.500963973818507,
+            "fused_score": 0.045669522156737356,
+            "rerank_score": 0.9843388795852661,
+            "fused_rank": 31,
+            "final_rank": 1
+          },
+          "source_path": "docs/ARCHITECTURE.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 13,
+          "text_preview": "### ChromaDB role\n\nChromaDB stores vectors locally in:\n\n```text\nstorage/chroma/\n```\n\nCurrent collections:\n\n```text\nskills\nknowledge_indexed\nknowledge_full\nmemory\n```\n\nFuture collections must include embedding backend/model/dimension, e.g.:\n\n```text\nknowledge_indexed_qwen3_embedding_4b_2560\nknowledge_indexed_qwen3_embedding_8b_4096\nknowledge_indexed_voyage_4_large_1024\n```\n\nThis prevents querying v"
+        },
+        {
+          "rank": 2,
+          "score": 0.9661832451820374,
+          "scores": {
+            "final_score": 0.9661832451820374,
+            "dense_score": 0.5426417420248862,
+            "bm25_score": 10.804800760009403,
+            "fused_score": 0.029415224609160268,
+            "rerank_score": 0.9661832451820374,
+            "fused_rank": 40,
+            "final_rank": 2
+          },
+          "source_path": "docs/phases/PHASE_01_CONFIG_AND_COLLECTION_SAFETY.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 11,
+          "text_preview": "## Desired outputs\n\n```text\n- Config supports embedding profiles.\n- Config supports chunking profiles.\n- Chroma collection names are model/profile/chunking safe.\n- Diagnostic config_status() tool exists.\n- Unsupported file types are not silently indexed.\n```\n\n---"
+        },
+        {
+          "rank": 3,
+          "score": 0.9468894004821777,
+          "scores": {
+            "final_score": 0.9468894004821777,
+            "dense_score": 0.6120635798884938,
+            "bm25_score": 9.907535192773908,
+            "fused_score": 0.05885876792546739,
+            "rerank_score": 0.9468894004821777,
+            "fused_rank": 29,
+            "final_rank": 3
+          },
+          "source_path": "docs/phases/PHASE_06_LOCAL_QWEN_EMBEDDINGS.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 8,
+          "text_preview": "### Step 2 \u2014 Add collection naming by embedding profile\n\nCollection names must include:\n\n```text\nembedding provider\nmodel name\ndimension\nchunking profile\nknowledge profile\n```\n\nExample:\n\n```text\nknowledge_indexed_local_qwen3_4b_qwen_qwen3_embedding_4b_2560_chunk_v2\n```"
+        },
+        {
+          "rank": 4,
+          "score": 0.9339568614959717,
+          "scores": {
+            "final_score": 0.9339568614959717,
+            "dense_score": 0.5525144642820587,
+            "bm25_score": 8.0331159742857,
+            "fused_score": 0.030869565217391304,
+            "rerank_score": 0.9339568614959717,
+            "fused_rank": 38,
+            "final_rank": 4
+          },
+          "source_path": "docs/phases/PHASE_06_LOCAL_QWEN_EMBEDDINGS.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 13,
+          "text_preview": "## Desired outputs\n\n```text\n- Embedding profiles in config.\n- Current BGE baseline still works.\n- Qwen3-4B profile can be selected.\n- Collection names include embedding model/dimension.\n- embedding_status() tool exists.\n- Indexed profile can be rebuilt with Qwen.\n```\n\n---"
+        },
+        {
+          "rank": 5,
+          "score": 0.8808859586715698,
+          "scores": {
+            "final_score": 0.8808859586715698,
+            "dense_score": 0.5750014282206527,
+            "bm25_score": 8.55990171039345,
+            "fused_score": 0.03417469627147046,
+            "rerank_score": 0.8808859586715698,
+            "fused_rank": 32,
+            "final_rank": 5
+          },
+          "source_path": "docs/phases/PHASE_06_LOCAL_QWEN_EMBEDDINGS.md",
+          "retrieval_mode": "hybrid+rerank",
+          "collection": "code_projects_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_ba20dd24c7b4da6d",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 2,
+          "text_preview": "## Desired architecture\n\n```text\nconfig.yaml embedding profile\n  \u2193\nembedding registry\n  \u2193\nembedding backend object\n  \u2193\nindexing pipeline embeds documents\n  \u2193\nretrieval pipeline embeds queries\n  \u2193\nChroma collection named by model/dimension/profile\n```\n\n---"
+        }
+      ]
+    },
+    {
+      "query_id": "skill_python_debug",
+      "query": "How to debug a Python issue",
+      "domain": "skills",
+      "tags": [
+        "skills",
+        "python"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 18,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "dense",
+      "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "debug"
+      ],
+      "expected_terms_found": [
+        "debug"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.5906706407397833,
+          "scores": {
+            "final_score": 0.5906706407397833,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/python_debugging.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 7,
+          "text_preview": "## Example requests\n\n- \"Why does this traceback happen?\"\n- \"Fix this Poetry import error.\"\n- \"My pytest test fails, what should I change?\"\n- \"Why does Python not find my module?\""
+        },
+        {
+          "rank": 2,
+          "score": 0.5859406473462209,
+          "scores": {
+            "final_score": 0.5859406473462209,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/python_debugging.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 3,
+          "text_preview": "## Do not use when\n\n- The user is only asking for high-level theory.\n- The issue is not related to Python or the Python environment.\n- The user wants a full redesign rather than a debug fix."
+        },
+        {
+          "rank": 3,
+          "score": 0.5808831053013025,
+          "scores": {
+            "final_score": 0.5808831053013025,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/python_debugging.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 4,
+          "text_preview": "## Keywords\n\npython, traceback, error, exception, pytest, import, module, poetry, environment, dependency, bug, failing test"
+        },
+        {
+          "rank": 4,
+          "score": 0.5751612300101203,
+          "scores": {
+            "final_score": 0.5751612300101203,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/python_debugging.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 5,
+          "text_preview": "## Procedure\n\n1. Identify the exact error message.\n2. Identify where the error occurs.\n3. Separate root cause from downstream symptoms.\n4. Check imports, paths, environment, and dependency versions.\n5. Propose the smallest fix.\n6. Suggest a verification command.\n7. If relevant, suggest a regression test."
+        },
+        {
+          "rank": 5,
+          "score": 0.5714912091660572,
+          "scores": {
+            "final_score": 0.5714912091660572,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/python_debugging.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 0,
+          "text_preview": "---\nid: python_debugging\nname: Python Debugging\nstatus: active\nversion: 1\ncreated_by: human\ntags:\n  - python\n  - debugging\n  - traceback\n  - tests\npriority: 0.85\n---"
+        }
+      ]
+    },
+    {
+      "query_id": "skill_refactor",
+      "query": "Plan a safe refactor",
+      "domain": "skills",
+      "tags": [
+        "skills"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 14,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "dense",
+      "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "refactor"
+      ],
+      "expected_terms_found": [
+        "refactor"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.5497607556107196,
+          "scores": {
+            "final_score": 0.5497607556107196,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/refactor_planning.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 5,
+          "text_preview": "## Procedure\n\n1. Identify what is currently hard to understand or change.\n2. Identify natural module boundaries.\n3. Separate configuration, I/O, business logic, and orchestration.\n4. Avoid premature abstraction.\n5. Propose small safe steps.\n6. Preserve existing behavior.\n7. Recommend tests before risky changes."
+        },
+        {
+          "rank": 2,
+          "score": 0.546314026264586,
+          "scores": {
+            "final_score": 0.546314026264586,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/refactor_planning.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 3,
+          "text_preview": "## Do not use when\n\n- The user only needs a one-line bug fix.\n- The current code is already simple and does not need restructuring.\n- The user asks for performance tuning rather than maintainability."
+        },
+        {
+          "rank": 3,
+          "score": 0.5458708953927074,
+          "scores": {
+            "final_score": 0.5458708953927074,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/refactor_planning.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 0,
+          "text_preview": "---\nid: refactor_planning\nname: Refactor Planning\nstatus: active\nversion: 1\ncreated_by: human\ntags:\n  - refactoring\n  - maintainability\n  - architecture\n  - code-quality\npriority: 0.8\n---"
+        },
+        {
+          "rank": 4,
+          "score": 0.5453273521135247,
+          "scores": {
+            "final_score": 0.5453273521135247,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/refactor_planning.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 2,
+          "text_preview": "## Use when\n\n- The user wants to reorganize code.\n- The user asks whether a repo structure is clean.\n- The user has duplicated logic, large files, unclear boundaries, or messy imports.\n- The user wants to move from script-style code to package-style code."
+        },
+        {
+          "rank": 5,
+          "score": 0.5297852255574207,
+          "scores": {
+            "final_score": 0.5297852255574207,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/refactor_planning.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 4,
+          "text_preview": "## Keywords\n\nrefactor, clean code, structure, package, module, maintainability, duplication, abstraction, simplify"
+        }
+      ]
+    },
+    {
+      "query_id": "skill_test_design",
+      "query": "Designing tests for a new feature",
+      "domain": "skills",
+      "tags": [
+        "skills",
+        "testing"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 8,
+      "error": null,
+      "candidate_count": 5,
+      "retrieval_mode": "dense",
+      "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "test"
+      ],
+      "expected_terms_found": [
+        "test"
+      ],
+      "expected_terms_hit_rate": 1.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.5455279064252205,
+          "scores": {
+            "final_score": 0.5455279064252205,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/test_design.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 5,
+          "text_preview": "## Procedure\n\n1. Identify the unit or behavior being tested.\n2. Separate unit tests from integration tests.\n3. Identify normal cases, edge cases, and failure cases.\n4. Prefer small deterministic tests.\n5. Add smoke tests for packaging or startup behavior.\n6. Use fixtures only when they reduce repetition.\n7. Recommend coverage only where it improves confidence."
+        },
+        {
+          "rank": 2,
+          "score": 0.52290069458855,
+          "scores": {
+            "final_score": 0.52290069458855,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/test_design.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 2,
+          "text_preview": "## Use when\n\n- The user asks how to test a Python function, module, pipeline, API, MCP tool, or data workflow.\n- The user wants pytest structure.\n- The user wants coverage defaults or CI test logic.\n- The user wants to identify edge cases."
+        },
+        {
+          "rank": 3,
+          "score": 0.5213981620643295,
+          "scores": {
+            "final_score": 0.5213981620643295,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/test_design.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 0,
+          "text_preview": "---\nid: test_design\nname: Test Design\nstatus: active\nversion: 1\ncreated_by: human\ntags:\n  - testing\n  - pytest\n  - coverage\n  - quality\npriority: 0.8\n---"
+        },
+        {
+          "rank": 4,
+          "score": 0.5209731916959031,
+          "scores": {
+            "final_score": 0.5209731916959031,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/test_design.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 4,
+          "text_preview": "## Keywords\n\ntest, pytest, unit test, integration test, smoke test, coverage, fixture, mock, edge case, validation"
+        },
+        {
+          "rank": 5,
+          "score": 0.5101346525291143,
+          "scores": {
+            "final_score": 0.5101346525291143,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": "skills/active/test_design.md",
+          "retrieval_mode": "dense",
+          "collection": "skills_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": 3,
+          "text_preview": "## Do not use when\n\n- The user is not asking about tests, validation, or quality assurance.\n- The request is purely about performance optimization.\n- The user only wants a conceptual explanation."
+        }
+      ]
+    },
+    {
+      "query_id": "memory_preferences",
+      "query": "User coding preferences and style",
+      "domain": "memory",
+      "tags": [
+        "memory"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 31,
+      "error": null,
+      "candidate_count": 1,
+      "retrieval_mode": "dense",
+      "collection": "memory_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "preference"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.3695201611233458,
+          "scores": {
+            "final_score": 0.3695201611233458,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": null,
+          "retrieval_mode": "dense",
+          "collection": "memory_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": null,
+          "text_preview": "No documents loaded."
+        }
+      ]
+    },
+    {
+      "query_id": "memory_projects",
+      "query": "Active project context for MCP server",
+      "domain": "memory",
+      "tags": [
+        "memory"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 12,
+      "error": null,
+      "candidate_count": 1,
+      "retrieval_mode": "dense",
+      "collection": "memory_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "mcp"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.4104424236553934,
+          "scores": {
+            "final_score": 0.4104424236553934,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": null,
+          "retrieval_mode": "dense",
+          "collection": "memory_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": null,
+          "text_preview": "No documents loaded."
+        }
+      ]
+    },
+    {
+      "query_id": "memory_decisions",
+      "query": "Past architectural decisions",
+      "domain": "memory",
+      "tags": [
+        "memory"
+      ],
+      "top_k_requested": 5,
+      "latency_ms": 41,
+      "error": null,
+      "candidate_count": 1,
+      "retrieval_mode": "dense",
+      "collection": "memory_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+      "embedding_profile": "local_bge_small",
+      "reranker_enabled": true,
+      "expected_terms": [
+        "decision"
+      ],
+      "expected_terms_found": [],
+      "expected_terms_hit_rate": 0.0,
+      "expected_paths_any": [],
+      "expected_paths_found": [],
+      "expected_paths_hit": null,
+      "top_results": [
+        {
+          "rank": 1,
+          "score": 0.40817718974820527,
+          "scores": {
+            "final_score": 0.40817718974820527,
+            "dense_score": null,
+            "bm25_score": null,
+            "fused_score": null,
+            "rerank_score": null,
+            "fused_rank": null,
+            "final_rank": null
+          },
+          "source_path": null,
+          "retrieval_mode": "dense",
+          "collection": "memory_global_local_bge_small_local_huggingface_baai_bge_small_en_v1_5_384_structure_v1_50cdf0e680b36002",
+          "embedding_profile": "local_bge_small",
+          "reranker_enabled": true,
+          "symbol_name": null,
+          "symbol_type": null,
+          "start_line": null,
+          "end_line": null,
+          "chunk_index": null,
+          "text_preview": "No documents loaded."
+        }
+      ]
+    }
+  ]
+}
