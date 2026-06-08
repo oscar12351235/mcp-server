@@ -34,15 +34,21 @@ projects:
 
 retrieval:
   embedding_model: "BAAI/bge-small-en-v1.5"
+  bm25_enabled: true
+  dense_top_k: 60
+  bm25_top_k: 60
+  fused_top_k: 80
+  final_top_k: 8
+  fusion: "rrf"
 
   defaults:
     skills_top_k: 3
-    knowledge_top_k: 5
+    knowledge_top_k: 8
     memory_top_k: 5
 
   limits:
     skills_top_k_max: 10
-    knowledge_top_k_max: 20
+    knowledge_top_k_max: 30
     memory_top_k_max: 10
 
 embedding:

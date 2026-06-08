@@ -28,7 +28,13 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from mcp.server.fastmcp import FastMCP
 
+from mcp_server.retrieval.bm25_store import (
+    bm25_retrieve,
+    load_bm25_index,
+    write_bm25_index,
+)
 from mcp_server.retrieval.chunkers import chunk_file, chunk_markdown, chunks_to_documents
+from mcp_server.retrieval.hybrid import Candidate, fuse_candidates
 from mcp_server.retrieval.manifest import (
     detect_changes,
     get_files_for_profile,
@@ -347,6 +353,30 @@ def _get_max_top_k(kind: str) -> int:
     return int(CONFIG["retrieval"]["limits"][f"{kind}_top_k_max"])
 
 
+def _bm25_enabled() -> bool:
+    return bool(CONFIG["retrieval"].get("bm25_enabled", False))
+
+
+def _dense_top_k() -> int:
+    return int(CONFIG["retrieval"].get("dense_top_k", _get_default_top_k("knowledge")))
+
+
+def _bm25_top_k() -> int:
+    return int(CONFIG["retrieval"].get("bm25_top_k", _get_default_top_k("knowledge")))
+
+
+def _fused_top_k() -> int:
+    return int(CONFIG["retrieval"].get("fused_top_k", _get_max_top_k("knowledge")))
+
+
+def _fusion_method() -> str:
+    return str(CONFIG["retrieval"].get("fusion", "rrf"))
+
+
+def _bm25_index_path(collection_name: str) -> Path:
+    return BM25_PATH / f"{_safe_collection_component(collection_name)}.jsonl"
+
+
 def _assert_allowed_gitlab_project(project_id: str) -> str:
     """
     Only allow GitLab access to explicitly configured projects.
@@ -534,6 +564,8 @@ Settings.llm = MockLLM()
 CHROMA_PATH = PROJECT_ROOT / "storage" / "chroma"
 CHROMA_PATH.mkdir(parents=True, exist_ok=True)
 MANIFEST_DB_PATH = PROJECT_ROOT / "storage" / "index_manifest.sqlite"
+BM25_PATH = PROJECT_ROOT / "storage" / "bm25"
+BM25_PATH.mkdir(parents=True, exist_ok=True)
 
 chroma_client = chromadb.PersistentClient(path=str(CHROMA_PATH))
 
@@ -954,6 +986,101 @@ def _format_nodes(nodes: list[Any], max_chars: int = 1800) -> list[dict[str, Any
     return output
 
 
+def _dense_candidates(nodes: list[Any]) -> list[Candidate]:
+    candidates: list[Candidate] = []
+
+    for rank, node_with_score in enumerate(nodes, start=1):
+        node = node_with_score.node
+        metadata = dict(node.metadata)
+        chunk_id = str(
+            metadata.get("chunk_id")
+            or f"{metadata.get('file_path', '')}:{metadata.get('chunk_index', '')}"
+        )
+        score = float(node_with_score.score or 0.0)
+        candidates.append(
+            Candidate(
+                chunk_id=chunk_id,
+                text=node.get_content(),
+                metadata=metadata,
+                score=score,
+                source="dense",
+                rank=rank,
+                dense_score=score,
+                retrieval_sources={"dense"},
+            )
+        )
+
+    return candidates
+
+
+def _format_candidates(candidates: list[Candidate], max_chars: int = 1800) -> list[dict[str, Any]]:
+    return [
+        {
+            "score": float(candidate.score),
+            "metadata": candidate.metadata,
+            "text": candidate.text[:max_chars],
+        }
+        for candidate in candidates
+    ]
+
+
+def _retrieve_knowledge_hybrid(query: str, final_top_k: int) -> list[dict[str, Any]]:
+    assert knowledge_index is not None
+
+    knowledge_collection_name = _collection_name("knowledge")
+    dense_k = max(final_top_k, _dense_top_k())
+    bm25_k = max(final_top_k, _bm25_top_k())
+    fused_k = max(final_top_k, _fused_top_k())
+
+    dense_retriever = knowledge_index.as_retriever(similarity_top_k=dense_k)
+    dense_candidates = _dense_candidates(dense_retriever.retrieve(query))
+
+    bm25_documents = load_bm25_index(_bm25_index_path(knowledge_collection_name))
+    bm25_candidates = bm25_retrieve(query, bm25_documents, top_k=bm25_k)
+
+    fused = fuse_candidates(
+        dense_candidates,
+        bm25_candidates,
+        fused_top_k=fused_k,
+        method=_fusion_method(),
+    )
+
+    return _format_candidates(fused[:final_top_k])
+
+
+def _knowledge_debug_payload(query: str, final_top_k: int) -> dict[str, Any]:
+    assert knowledge_index is not None
+
+    knowledge_collection_name = _collection_name("knowledge")
+    dense_k = max(final_top_k, _dense_top_k())
+    bm25_k = max(final_top_k, _bm25_top_k())
+    fused_k = max(final_top_k, _fused_top_k())
+
+    dense_retriever = knowledge_index.as_retriever(similarity_top_k=dense_k)
+    dense_candidates = _dense_candidates(dense_retriever.retrieve(query))
+    bm25_candidates = bm25_retrieve(
+        query,
+        load_bm25_index(_bm25_index_path(knowledge_collection_name)),
+        top_k=bm25_k,
+    )
+    fused_candidates = fuse_candidates(
+        dense_candidates,
+        bm25_candidates,
+        fused_top_k=fused_k,
+        method=_fusion_method(),
+    )
+
+    return {
+        "query": query,
+        "collection": knowledge_collection_name,
+        "bm25_enabled": _bm25_enabled(),
+        "bm25_index_path": str(_bm25_index_path(knowledge_collection_name)),
+        "dense_candidates": _format_candidates(dense_candidates[:dense_k]),
+        "bm25_candidates": _format_candidates(bm25_candidates[:bm25_k]),
+        "fused_candidates": _format_candidates(fused_candidates[:final_top_k]),
+    }
+
+
 def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
     global skills_index, knowledge_index, memory_index, INDEX_STATUS
 
@@ -1009,6 +1136,8 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
             documents=knowledge_docs,
             collection_name=knowledge_collection_name,
         )
+        logger.info("Writing BM25 knowledge index...")
+        write_bm25_index(_bm25_index_path(knowledge_collection_name), knowledge_docs)
 
     INDEX_STATUS = {
         "skills_collection": skills_collection_name,
@@ -1020,6 +1149,8 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
         "embedding_fingerprint": _embedding_config_fingerprint(),
         "retrieval_fingerprint": _retrieval_config_fingerprint(),
         "chunking_profile": _active_chunking_profile_name(),
+        "bm25_enabled": str(_bm25_enabled()),
+        "bm25_index_path": str(_bm25_index_path(knowledge_collection_name)),
         "mode": "force_rebuild" if force_rebuild else "load_existing_or_empty",
     }
 
@@ -1220,14 +1351,45 @@ def retrieve_knowledge(query: str, top_k: int | None = None) -> list[dict[str, A
 
     k = _bounded_top_k(
         top_k,
-        _get_default_top_k("knowledge"),
+        int(CONFIG["retrieval"].get("final_top_k", _get_default_top_k("knowledge"))),
         _get_max_top_k("knowledge"),
     )
+
+    if _bm25_enabled():
+        return _retrieve_knowledge_hybrid(query, k)
 
     retriever = knowledge_index.as_retriever(similarity_top_k=k)
     nodes = retriever.retrieve(query)
 
     return _format_nodes(nodes)
+
+
+@mcp.tool()
+def retrieve_knowledge_debug(query: str, top_k: int | None = None) -> dict[str, Any]:
+    """Retrieve knowledge with dense, BM25, and fused diagnostic candidates."""
+    _ensure_indexes()
+
+    assert knowledge_index is not None
+
+    k = _bounded_top_k(
+        top_k,
+        int(CONFIG["retrieval"].get("final_top_k", _get_default_top_k("knowledge"))),
+        _get_max_top_k("knowledge"),
+    )
+
+    if _bm25_enabled():
+        return _knowledge_debug_payload(query, k)
+
+    dense_retriever = knowledge_index.as_retriever(similarity_top_k=k)
+    dense_candidates = _dense_candidates(dense_retriever.retrieve(query))
+    return {
+        "query": query,
+        "collection": _collection_name("knowledge"),
+        "bm25_enabled": False,
+        "dense_candidates": _format_candidates(dense_candidates),
+        "bm25_candidates": [],
+        "fused_candidates": _format_candidates(dense_candidates),
+    }
 
 
 @mcp.tool()

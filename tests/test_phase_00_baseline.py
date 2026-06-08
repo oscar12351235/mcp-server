@@ -16,6 +16,7 @@ EXPECTED_TOOLS = {
     "list_changed_files",
     "retrieve_skills",
     "retrieve_knowledge",
+    "retrieve_knowledge_debug",
     "retrieve_memory",
     "read_local_file",
     "list_local_files",
