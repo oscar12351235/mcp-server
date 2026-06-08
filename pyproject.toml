@@ -31,6 +31,10 @@ ruff = ">=0.4,<1.0"
 mypy = ">=1.10,<2.0"
 types-PyYAML = ">=6.0,<7.0"
 
+
+[tool.poetry.group.voyage.dependencies]
+voyageai = "^0.4.0"
+
 [tool.poetry.scripts]
 personal-mcp = "mcp_server.mcp_server:main"
 

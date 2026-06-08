@@ -55,6 +55,14 @@ from mcp_server.retrieval.manifest import (
     upsert_file,
 )
 from mcp_server.retrieval.rerankers import rerank_or_fallback
+from mcp_server.retrieval.token_budget import (
+    check_token_budget,
+    estimate_tokens,
+    new_run_id,
+    record_token_ledger,
+    token_budget_from_config,
+    token_ledger_summary,
+)
 
 # ---------------------------------------------------------------------
 # Logging
@@ -125,10 +133,10 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"embedding profile {active_embedding_profile} requires {key}")
 
     provider = active_embedding["provider"]
-    if provider != "local_huggingface":
+    if provider not in {"local_huggingface", "voyage"}:
         raise ValueError(
             f"Embedding provider is configured but not implemented in this phase: {provider}. "
-            "Supported provider: local_huggingface. Voyage is reserved for a future phase."
+            "Supported providers: local_huggingface, voyage."
         )
 
     chunking = config.setdefault("chunking", {})
@@ -274,6 +282,10 @@ def _active_embedding_profile_name() -> str:
 def _active_embedding_config() -> dict[str, Any]:
     profile = _active_embedding_profile_name()
     return dict(CONFIG["embedding"]["profiles"][profile])
+
+
+def _active_embedding_provider() -> str:
+    return str(_active_embedding_config().get("provider", ""))
 
 
 def _active_chunking_profile_name() -> str:
@@ -495,6 +507,75 @@ def _reranker_status() -> dict[str, Any]:
         "candidate_top_k": _reranker_candidate_top_k(),
         "final_top_k": _reranker_final_top_k(),
         "batch_size": _reranker_batch_size(),
+    }
+
+
+def _is_voyage_active() -> bool:
+    return _active_embedding_provider() == "voyage"
+
+
+def _voyage_config() -> dict[str, Any]:
+    return dict(CONFIG.get("voyage", {}))
+
+
+def _estimate_changed_embedding_tokens(profile: str | None = None) -> dict[str, Any]:
+    status = scan_index_changes(profile)
+    changed_files = (
+        status["added"]
+        + status["edited"]
+        + status.get("config_changed", [])
+        + [item for item in status.get("moved", []) if item.get("new_path")]
+    )
+    estimated_tokens_total = 0
+    estimated_files: list[dict[str, Any]] = []
+    for item in changed_files:
+        path = item.get("path") or item.get("new_path")
+        if not path:
+            continue
+        try:
+            chunks = chunk_file(
+                path,
+                max_chars=_chunking_limits()[0],
+                overlap_chars=_chunking_limits()[1],
+                base_metadata={"chunking_profile": _active_chunking_profile_name()},
+            )
+            tokens = sum(estimate_tokens(chunk.text) for chunk in chunks)
+            chunk_count = len(chunks)
+        except Exception:
+            try:
+                tokens = max(1, Path(path).stat().st_size // 4)
+            except Exception:
+                tokens = 0
+            chunk_count = 1 if tokens else 0
+
+        estimated_tokens_total += tokens
+        estimated_files.append(
+            {
+                "path": path,
+                "status": item.get("status"),
+                "estimated_tokens": tokens,
+                "estimated_chunks": chunk_count,
+            }
+        )
+
+    ledger = token_ledger_summary(MANIFEST_DB_PATH)
+    budget = token_budget_from_config(CONFIG)
+    budget_check = check_token_budget(
+        estimated_tokens=estimated_tokens_total,
+        historical_tokens=int(ledger["total_tokens_actual"]),
+        budget=budget,
+    )
+    return {
+        "profile": status["profile"],
+        "provider": _active_embedding_provider(),
+        "embedding_profile": _active_embedding_profile_name(),
+        "model": _active_embedding_config().get("model"),
+        "collection_name": status["collection_name"],
+        "estimated_tokens": estimated_tokens_total,
+        "estimated_files": estimated_files,
+        "counts": status["counts"],
+        "budget": budget_check,
+        "dry_run": True,
     }
 
 
@@ -789,17 +870,24 @@ def _build_index(
     force_rebuild: bool = False,
     collection_metadata: dict[str, str] | None = None,
 ) -> VectorStoreIndex:
-    _ensure_embedding_model()
-
     collection = _get_collection(
         collection_name,
         force_rebuild=force_rebuild,
         metadata=collection_metadata,
     )
+    existing_count = collection.count()
+
+    if _is_voyage_active() and not docs and existing_count == 0:
+        raise RuntimeError(
+            "Refusing to create placeholder vectors with a Voyage embedding profile. "
+            "Run index_changes(apply=False) to estimate cost, then "
+            "index_changes(apply=True, confirm=True) for explicit Voyage indexing."
+        )
+
+    _ensure_embedding_model()
+
     vector_store = ChromaVectorStore(chroma_collection=collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
-
-    existing_count = collection.count()
 
     if existing_count > 0 and not force_rebuild:
         logger.info(
@@ -1256,6 +1344,13 @@ def _knowledge_debug_payload(query: str, final_top_k: int) -> dict[str, Any]:
 def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
     global code_index, skills_index, knowledge_index, memory_index, INDEX_STATUS
 
+    if force_rebuild and _is_voyage_active():
+        raise RuntimeError(
+            "Refusing full rebuild with Voyage embedding profile. Use index_changes(apply=False) "
+            "to estimate cost, then index_changes(apply=True, confirm=True) for explicit "
+            "incremental indexing."
+        )
+
     knowledge_paths = _get_knowledge_paths()
     skills_collection_name = _collection_name("skills")
     knowledge_collection_name = _collection_name("knowledge")
@@ -1559,6 +1654,124 @@ def list_changed_files(profile: str | None = None) -> dict[str, list[dict[str, A
         "config_changed": status["config_changed"],
         "deleted": status["deleted"],
         "moved": status["moved"],
+    }
+
+
+@mcp.tool()
+def embedding_budget_status() -> dict[str, Any]:
+    """Show embedding token budget and ledger summary."""
+    budget = token_budget_from_config(CONFIG)
+    ledger = token_ledger_summary(MANIFEST_DB_PATH)
+    return {
+        "provider": _active_embedding_provider(),
+        "embedding_profile": _active_embedding_profile_name(),
+        "model": _active_embedding_config().get("model"),
+        "voyage_active": _is_voyage_active(),
+        "voyage": {
+            "require_explicit_apply": bool(_voyage_config().get("require_explicit_apply", True)),
+            "max_tokens_per_run_default": budget.max_tokens_per_run,
+            "warn_at_total_tokens": budget.warning_threshold,
+            "hard_stop_at_total_tokens": budget.hard_stop_threshold,
+        },
+        "ledger": ledger,
+    }
+
+
+@mcp.tool()
+def estimate_embedding_cost(profile: str | None = None) -> dict[str, Any]:
+    """Dry-run changed-file embedding token estimate."""
+    estimate = _estimate_changed_embedding_tokens(profile)
+    run_id = new_run_id()
+    record_token_ledger(
+        MANIFEST_DB_PATH,
+        run_id=run_id,
+        provider=estimate["provider"],
+        model=str(estimate["model"]),
+        usage_type="document_embedding_estimate",
+        tokens=int(estimate["estimated_tokens"]),
+        estimated_or_actual="estimated",
+        notes=f"profile={estimate['profile']}; dry_run=true",
+    )
+    return {
+        **estimate,
+        "run_id": run_id,
+        "ledger_recorded": True,
+    }
+
+
+@mcp.tool()
+def index_changes(
+    profile: str | None = None,
+    apply: bool = False,
+    confirm: bool = False,
+) -> dict[str, Any]:
+    """
+    Dry-run changed-file indexing by default.
+
+    Voyage apply requires apply=True and confirm=True. This prevents accidental
+    cloud embedding of a full library.
+    """
+    estimate = _estimate_changed_embedding_tokens(profile)
+    run_id = new_run_id()
+    record_token_ledger(
+        MANIFEST_DB_PATH,
+        run_id=run_id,
+        provider=estimate["provider"],
+        model=str(estimate["model"]),
+        usage_type="document_embedding_estimate",
+        tokens=int(estimate["estimated_tokens"]),
+        estimated_or_actual="estimated",
+        notes=f"profile={estimate['profile']}; apply={apply}",
+    )
+
+    if not apply:
+        return {
+            **estimate,
+            "run_id": run_id,
+            "apply": False,
+            "applied": False,
+            "message": "Dry run only. Re-run with apply=True and confirm=True to request indexing.",
+        }
+
+    if not _is_voyage_active():
+        return {
+            **estimate,
+            "run_id": run_id,
+            "apply": True,
+            "applied": False,
+            "message": "index_changes(apply=True) is only enabled for Voyage profiles.",
+        }
+
+    if _voyage_config().get("require_explicit_apply", True) and not confirm:
+        return {
+            **estimate,
+            "run_id": run_id,
+            "apply": True,
+            "applied": False,
+            "message": "Voyage indexing requires confirm=True.",
+        }
+
+    if not estimate["budget"]["allowed"]:
+        return {
+            **estimate,
+            "run_id": run_id,
+            "apply": True,
+            "applied": False,
+            "message": "Estimated tokens exceed configured Voyage budget limits.",
+        }
+
+    if not os.environ.get("VOYAGE_API_KEY"):
+        raise RuntimeError("VOYAGE_API_KEY is missing. Set it in .env before Voyage indexing.")
+
+    return {
+        **estimate,
+        "run_id": run_id,
+        "apply": True,
+        "applied": False,
+        "message": (
+            "Voyage budget and confirmation checks passed. Per-file Voyage vector upserts "
+            "are intentionally not executed by this safety patch."
+        ),
     }
 
 

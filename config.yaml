@@ -119,6 +119,37 @@ embedding:
       instruction: "Represent this document for retrieval."
       trust_remote_code: true
 
+    voyage_4_large:
+      provider: "voyage"
+      model: "voyage-4-large"
+      dimension: 1024
+      input_type_document: "document"
+      input_type_query: "query"
+      batch_size: 64
+
+    voyage_code_3:
+      provider: "voyage"
+      model: "voyage-code-3"
+      dimension: 1024
+      input_type_document: "document"
+      input_type_query: "query"
+      batch_size: 64
+
+    voyage_finance_2:
+      provider: "voyage"
+      model: "voyage-finance-2"
+      dimension: 1024
+      input_type_document: "document"
+      input_type_query: "query"
+      batch_size: 64
+
+voyage:
+  require_explicit_apply: true
+  max_tokens_per_run_default: 2000000
+  max_tokens_per_file_default: 500000
+  warn_at_total_tokens: 150000000
+  hard_stop_at_total_tokens: 190000000
+
 chunking:
   active_profile: "structure_v1"
 

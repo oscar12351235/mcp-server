@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib
 import sys
 
+import pytest
+
 EXPECTED_TOOLS = {
     "collection_status",
     "embedding_config_status",
@@ -15,6 +17,9 @@ EXPECTED_TOOLS = {
     "scan_index_changes",
     "list_indexed_files",
     "list_changed_files",
+    "embedding_budget_status",
+    "estimate_embedding_cost",
+    "index_changes",
     "retrieve_skills",
     "retrieve_knowledge",
     "retrieve_knowledge_debug",
@@ -211,6 +216,50 @@ def test_qwen3_8b_profile_reports_heavy_model_warning(monkeypatch):
 
     assert status["active_profile"] == "local_qwen3_8b"
     assert any("8B" in warning and "heavy" in warning for warning in status["warnings"])
+
+
+def test_voyage_profile_changes_collection_name_without_api_key(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+    monkeypatch.delenv("VOYAGE_API_KEY", raising=False)
+
+    monkeypatch.setitem(server.CONFIG["embedding"], "active_profile", "voyage_code_3")
+
+    collection_name = server._collection_name("knowledge")
+    status = server.embedding_config_status()
+
+    assert "voyage_code_3" in collection_name
+    assert "voyage_code_3" in collection_name
+    assert status["provider"] == "voyage"
+    assert status["model"] == "voyage-code-3"
+    assert any("cloud API" in warning for warning in status["warnings"])
+
+
+def test_full_rebuild_with_voyage_is_refused(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+
+    monkeypatch.setitem(server.CONFIG["embedding"], "active_profile", "voyage_code_3")
+
+    with pytest.raises(RuntimeError, match="Refusing full rebuild with Voyage"):
+        server._rebuild_all_indexes(force_rebuild=True)
+
+
+def test_voyage_empty_collection_refuses_placeholder_before_embedding(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+
+    class EmptyCollection:
+        def count(self):
+            return 0
+
+    monkeypatch.setattr(server, "_is_voyage_active", lambda: True)
+    monkeypatch.setattr(server, "_get_collection", lambda *args, **kwargs: EmptyCollection())
+
+    def fail_if_called():
+        raise AssertionError("embedding model should not be loaded")
+
+    monkeypatch.setattr(server, "_ensure_embedding_model", fail_if_called)
+
+    with pytest.raises(RuntimeError, match="Refusing to create placeholder vectors"):
+        server._build_index("empty_voyage_collection", [])
 
 
 def test_changing_include_full_class_chunks_changes_code_identity(monkeypatch):
