@@ -32,6 +32,40 @@ projects:
     - "mcp-server"
     - "python-project-template"
 
+code_retrieval:
+  enabled: true
+  default_profile: "projects"
+
+  chunking:
+    include_full_class_chunks: false
+    include_method_chunks: true
+
+  profiles:
+    projects:
+      paths:
+        - "/Users/oscarbonnet/PycharmProjects/mcp-server"
+      excluded:
+        - ".venv"
+        - "storage"
+        - ".git"
+        - "node_modules"
+        - "__pycache__"
+        - ".pytest_cache"
+        - ".mypy_cache"
+        - ".ruff_cache"
+        - "coverage.xml"
+        - "htmlcov"
+
+  allowed_extensions:
+    - ".py"
+    - ".md"
+    - ".yaml"
+    - ".yml"
+    - ".toml"
+    - ".json"
+    - ".sql"
+    - ".sh"
+
 retrieval:
   embedding_model: "BAAI/bge-small-en-v1.5"
   bm25_enabled: true

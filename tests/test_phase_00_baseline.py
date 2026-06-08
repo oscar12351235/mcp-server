@@ -18,6 +18,10 @@ EXPECTED_TOOLS = {
     "retrieve_skills",
     "retrieve_knowledge",
     "retrieve_knowledge_debug",
+    "retrieve_code",
+    "list_code_repos",
+    "code_index_status",
+    "read_code_symbol",
     "retrieve_memory",
     "read_local_file",
     "list_local_files",
@@ -207,3 +211,43 @@ def test_qwen3_8b_profile_reports_heavy_model_warning(monkeypatch):
 
     assert status["active_profile"] == "local_qwen3_8b"
     assert any("8B" in warning and "heavy" in warning for warning in status["warnings"])
+
+
+def test_changing_include_full_class_chunks_changes_code_identity(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+    original_collection = server._code_collection_name()
+    original_bm25_path = server._bm25_index_path(original_collection)
+    original_fingerprint = server._code_retrieval_fingerprint()
+
+    monkeypatch.setitem(
+        server.CONFIG["code_retrieval"]["chunking"],
+        "include_full_class_chunks",
+        True,
+    )
+
+    changed_collection = server._code_collection_name()
+
+    assert changed_collection != original_collection
+    assert server._bm25_index_path(changed_collection) != original_bm25_path
+    assert server._code_retrieval_fingerprint() != original_fingerprint
+
+
+def test_changing_include_method_chunks_changes_code_identity(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+    original_collection = server._code_collection_name()
+    original_bm25_path = server._bm25_index_path(original_collection)
+    original_fingerprint = server._code_retrieval_fingerprint()
+
+    monkeypatch.setitem(
+        server.CONFIG["code_retrieval"]["chunking"],
+        "include_method_chunks",
+        False,
+    )
+
+    changed_collection = server._code_collection_name()
+    status = server.code_index_status()
+
+    assert changed_collection != original_collection
+    assert server._bm25_index_path(changed_collection) != original_bm25_path
+    assert status["fingerprint"] != original_fingerprint
+    assert status["chunking"]["include_method_chunks"] is False

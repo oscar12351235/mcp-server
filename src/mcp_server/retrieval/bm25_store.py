@@ -23,6 +23,11 @@ SEARCHABLE_METADATA_FIELDS = (
     "source_type",
     "extension",
     "language",
+    "repo_name",
+    "qualified_symbol",
+    "parent_symbol",
+    "file_role",
+    "imports",
 )
 
 

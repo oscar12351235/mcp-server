@@ -33,6 +33,12 @@ from mcp_server.retrieval.bm25_store import (
     write_bm25_index,
 )
 from mcp_server.retrieval.chunkers import chunk_file, chunk_markdown, chunks_to_documents
+from mcp_server.retrieval.code_loader import configured_code_repos, load_code_documents
+from mcp_server.retrieval.code_retrieval import (
+    find_symbol_candidate,
+    format_code_candidates,
+    retrieve_code_candidates,
+)
 from mcp_server.retrieval.embeddings import (
     build_embedding_backend,
     embedding_profile_warnings,
@@ -299,6 +305,38 @@ def _retrieval_config_fingerprint() -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
 
 
+def _active_code_profile_config() -> dict[str, Any]:
+    code_config = _code_retrieval_config()
+    profiles = code_config.get("profiles", {})
+    return dict(profiles.get(_active_code_profile_name(), {}))
+
+
+def _active_code_chunking_config() -> dict[str, Any]:
+    chunking = dict(_code_retrieval_config().get("chunking", {}))
+    return {
+        "include_full_class_chunks": bool(chunking.get("include_full_class_chunks", False)),
+        "include_method_chunks": bool(chunking.get("include_method_chunks", True)),
+    }
+
+
+def _code_retrieval_fingerprint() -> str:
+    code_config = _code_retrieval_config()
+    code_profile = _active_code_profile_config()
+    payload = {
+        "embedding_profile": _active_embedding_profile_name(),
+        "embedding": _active_embedding_config(),
+        "chunking_profile": _active_chunking_profile_name(),
+        "chunking": _active_chunking_config(),
+        "code_profile": _active_code_profile_name(),
+        "code_paths": code_profile.get("paths", []),
+        "code_excluded": code_profile.get("excluded", code_config.get("excluded", [])),
+        "code_allowed_extensions": code_config.get("allowed_extensions", []),
+        "code_chunking": _active_code_chunking_config(),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
+
+
 def _collection_name(domain: str, profile: str | None = None) -> str:
     allowed_domains = {"skills", "knowledge", "memory", "code"}
     if domain not in allowed_domains:
@@ -323,6 +361,21 @@ def _collection_name(domain: str, profile: str | None = None) -> str:
     return "_".join(_safe_collection_component(part) for part in parts)
 
 
+def _code_collection_name() -> str:
+    embedding_cfg = _active_embedding_config()
+    parts = [
+        "code",
+        _active_code_profile_name(),
+        _active_embedding_profile_name(),
+        embedding_cfg["provider"],
+        embedding_cfg["model"],
+        embedding_cfg.get("dimension", "default"),
+        _active_chunking_profile_name(),
+        _code_retrieval_fingerprint(),
+    ]
+    return "_".join(_safe_collection_component(part) for part in parts)
+
+
 def _collection_metadata(domain: str, profile: str | None = None) -> dict[str, str]:
     embedding_cfg = _active_embedding_config()
     return {
@@ -334,6 +387,7 @@ def _collection_metadata(domain: str, profile: str | None = None) -> dict[str, s
         "embedding_dimension": str(embedding_cfg.get("dimension", "default")),
         "embedding_fingerprint": _embedding_config_fingerprint(),
         "retrieval_fingerprint": _retrieval_config_fingerprint(),
+        "code_retrieval_fingerprint": (_code_retrieval_fingerprint() if domain == "code" else ""),
         "chunking_profile": _active_chunking_profile_name(),
     }
 
@@ -360,6 +414,18 @@ def _get_max_top_k(kind: str) -> int:
 
 def _bm25_enabled() -> bool:
     return bool(CONFIG["retrieval"].get("bm25_enabled", False))
+
+
+def _code_retrieval_config() -> dict[str, Any]:
+    return dict(CONFIG.get("code_retrieval", {}))
+
+
+def _code_retrieval_enabled() -> bool:
+    return bool(_code_retrieval_config().get("enabled", False))
+
+
+def _active_code_profile_name() -> str:
+    return str(_code_retrieval_config().get("default_profile", "projects"))
 
 
 def _dense_top_k() -> int:
@@ -658,10 +724,12 @@ IGNORED_INDEX_DIRS = {
 skills_index: VectorStoreIndex | None = None
 knowledge_index: VectorStoreIndex | None = None
 memory_index: VectorStoreIndex | None = None
+code_index: VectorStoreIndex | None = None
 INDEX_STATUS: dict[str, str] = {
     "skills": "not built yet",
     "knowledge": "not built yet",
     "memory": "not built yet",
+    "code": "not built yet",
 }
 _EMBEDDING_MODEL_READY = False
 _EMBEDDING_MODEL_FINGERPRINT: str | None = None
@@ -848,6 +916,20 @@ def _load_local_documents(paths: list[str], source_type: str) -> list[Document]:
             documents.extend(_load_single_local_file(path, source_type))
 
     return documents
+
+
+def _load_code_documents() -> list[Document]:
+    if not _code_retrieval_enabled():
+        return []
+
+    max_chars, overlap_chars = _chunking_limits()
+    result = load_code_documents(
+        CONFIG,
+        max_chars=max_chars,
+        overlap_chars=overlap_chars,
+        validate_path=_assert_allowed_read,
+    )
+    return result.documents
 
 
 def _load_gitlab_skills() -> list[Document]:
@@ -1172,12 +1254,13 @@ def _knowledge_debug_payload(query: str, final_top_k: int) -> dict[str, Any]:
 
 
 def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
-    global skills_index, knowledge_index, memory_index, INDEX_STATUS
+    global code_index, skills_index, knowledge_index, memory_index, INDEX_STATUS
 
     knowledge_paths = _get_knowledge_paths()
     skills_collection_name = _collection_name("skills")
     knowledge_collection_name = _collection_name("knowledge")
     memory_collection_name = _collection_name("memory")
+    code_collection_name = _code_collection_name()
 
     if force_rebuild:
         logger.info("Force rebuild enabled. Loading source documents...")
@@ -1190,10 +1273,14 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
 
         logger.info("Loading local memory...")
         memory_docs = _load_local_documents([CONFIG["memory"]["local_path"]], "memory")
+
+        logger.info("Loading local code repos...")
+        code_docs = _load_code_documents()
     else:
         skills_docs = []
         knowledge_docs = []
         memory_docs = []
+        code_docs = []
 
     logger.info("Building/loading skills index...")
     skills_index = _build_index(
@@ -1219,6 +1306,14 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
         collection_metadata=_collection_metadata("memory"),
     )
 
+    logger.info("Building/loading code index...")
+    code_index = _build_index(
+        code_collection_name,
+        code_docs,
+        force_rebuild=force_rebuild,
+        collection_metadata=_collection_metadata("code", profile=_active_code_profile_name()),
+    )
+
     if force_rebuild:
         logger.info("Recording indexed knowledge files in manifest...")
         _record_manifest_for_documents(
@@ -1228,11 +1323,17 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
         )
         logger.info("Writing BM25 knowledge index...")
         write_bm25_index(_bm25_index_path(knowledge_collection_name), knowledge_docs)
+        logger.info("Writing BM25 code index...")
+        write_bm25_index(_bm25_index_path(code_collection_name), code_docs)
 
     INDEX_STATUS = {
         "skills_collection": skills_collection_name,
         "knowledge_collection": knowledge_collection_name,
         "memory_collection": memory_collection_name,
+        "code_collection": code_collection_name,
+        "code_enabled": str(_code_retrieval_enabled()),
+        "code_profile": _active_code_profile_name(),
+        "code_bm25_index_path": str(_bm25_index_path(code_collection_name)),
         "knowledge_profile": KNOWLEDGE_PROFILE,
         "knowledge_paths": ", ".join(knowledge_paths),
         "embedding_profile": _active_embedding_profile_name(),
@@ -1255,6 +1356,26 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
 def _ensure_indexes() -> None:
     if skills_index is None or knowledge_index is None or memory_index is None:
         _rebuild_all_indexes()
+
+
+def _ensure_code_index(force_rebuild: bool = False) -> None:
+    global code_index
+
+    if not _code_retrieval_enabled():
+        raise RuntimeError("Code retrieval is disabled in config.yaml")
+    if code_index is not None and not force_rebuild:
+        return
+
+    code_collection_name = _code_collection_name()
+    code_docs = _load_code_documents() if force_rebuild else []
+    code_index = _build_index(
+        code_collection_name,
+        code_docs,
+        force_rebuild=force_rebuild,
+        collection_metadata=_collection_metadata("code", profile=_active_code_profile_name()),
+    )
+    if force_rebuild:
+        write_bm25_index(_bm25_index_path(code_collection_name), code_docs)
 
 
 # ---------------------------------------------------------------------
@@ -1310,6 +1431,7 @@ def collection_status() -> dict[str, Any]:
     skills_collection_name = _collection_name("skills")
     knowledge_collection_name = _collection_name("knowledge")
     memory_collection_name = _collection_name("memory")
+    code_collection_name = _code_collection_name()
 
     return {
         "skills": {
@@ -1329,6 +1451,49 @@ def collection_status() -> dict[str, Any]:
             "vectors": _collection_count(memory_collection_name),
             "embedding": _collection_metadata("memory"),
         },
+        "code": {
+            "collection": code_collection_name,
+            "profile": _active_code_profile_name(),
+            "enabled": _code_retrieval_enabled(),
+            "vectors": _collection_count(code_collection_name),
+            "embedding": _collection_metadata("code", profile=_active_code_profile_name()),
+        },
+    }
+
+
+@mcp.tool()
+def list_code_repos() -> list[dict[str, Any]]:
+    """List local repositories configured for code retrieval."""
+    repos = configured_code_repos(CONFIG, validate_path=_assert_allowed_read)
+    return [{"repo_name": repo.name, "path": str(repo.path)} for repo in repos]
+
+
+@mcp.tool()
+def code_index_status() -> dict[str, Any]:
+    """Show code retrieval index status."""
+    collection_name = _code_collection_name()
+    bm25_documents = load_bm25_index(_bm25_index_path(collection_name))
+    files = {
+        f"{doc.metadata.get('repo_name')}:{doc.metadata.get('file_path')}" for doc in bm25_documents
+    }
+    repos = sorted({str(doc.metadata.get("repo_name")) for doc in bm25_documents})
+
+    return {
+        "enabled": _code_retrieval_enabled(),
+        "profile": _active_code_profile_name(),
+        "fingerprint": _code_retrieval_fingerprint(),
+        "chunking": _active_code_chunking_config(),
+        "collection": collection_name,
+        "vectors": _collection_count(collection_name),
+        "bm25_index_path": str(_bm25_index_path(collection_name)),
+        "bm25_chunks": len(bm25_documents),
+        "indexed_files": len(files),
+        "indexed_repos": repos,
+        "configured_repos": list_code_repos(),
+        "excluded": CONFIG.get("code_retrieval", {})
+        .get("profiles", {})
+        .get(_active_code_profile_name(), {})
+        .get("excluded", []),
     }
 
 
@@ -1513,6 +1678,85 @@ def retrieve_knowledge_debug(query: str, top_k: int | None = None) -> dict[str, 
         "bm25_candidates": [],
         "fused_candidates": _format_candidates(dense_candidates),
         "reranked_candidates": _format_candidates(reranked_candidates),
+    }
+
+
+@mcp.tool()
+def retrieve_code(
+    query: str,
+    repo: str | None = None,
+    top_k: int | None = None,
+) -> list[dict[str, Any]]:
+    """Retrieve relevant local repository code chunks with file paths and line ranges."""
+    _ensure_code_index()
+
+    assert code_index is not None
+
+    k = _knowledge_final_top_k(top_k)
+    dense_k = max(k, _dense_top_k())
+    bm25_k = max(k, _bm25_top_k())
+    fused_k = max(k, _fused_top_k())
+    collection_name = _code_collection_name()
+
+    dense_retriever = code_index.as_retriever(similarity_top_k=dense_k)
+    candidates = retrieve_code_candidates(
+        query,
+        dense_nodes=dense_retriever.retrieve(query),
+        bm25_index_path=str(_bm25_index_path(collection_name)),
+        repo=repo,
+        bm25_top_k=bm25_k,
+        fused_top_k=fused_k,
+        fusion_method=_fusion_method(),
+        reranker_enabled=_reranker_enabled(),
+        reranker_provider=_reranker_provider(),
+        reranker_model=_reranker_model(),
+        reranker_candidate_top_k=max(k, _reranker_candidate_top_k()),
+        final_top_k=k,
+        reranker_batch_size=_reranker_batch_size(),
+        logger=logger,
+    )
+
+    return format_code_candidates(candidates["reranked"])
+
+
+@mcp.tool()
+def read_code_symbol(
+    repo: str,
+    symbol_name: str,
+    file_path: str | None = None,
+) -> dict[str, Any]:
+    """Read exact source lines for an indexed code symbol."""
+    collection_name = _code_collection_name()
+    bm25_candidates = bm25_retrieve(
+        symbol_name,
+        load_bm25_index(_bm25_index_path(collection_name)),
+        top_k=200,
+    )
+    candidate = find_symbol_candidate(
+        bm25_candidates,
+        repo=repo,
+        symbol_name=symbol_name,
+        file_path=file_path,
+    )
+    if candidate is None:
+        raise FileNotFoundError(f"Indexed symbol not found: {repo}:{symbol_name}")
+
+    metadata = candidate.metadata
+    absolute_path = _assert_allowed_read(str(metadata.get("absolute_file_path", "")))
+    start_line = int(metadata.get("start_line", 1))
+    end_line = int(metadata.get("end_line", start_line))
+    lines = absolute_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    source = "\n".join(lines[start_line - 1 : end_line])
+
+    return {
+        "repo": repo,
+        "symbol_name": symbol_name,
+        "file_path": metadata.get("file_path"),
+        "absolute_file_path": str(absolute_path),
+        "start_line": start_line,
+        "end_line": end_line,
+        "metadata": metadata,
+        "source": source,
     }
 
 
