@@ -26,7 +26,7 @@ EXPECTED_TOOLS = {
 def expected_knowledge_collection(server, profile: str) -> str:
     return (
         f"knowledge_{profile}_local_bge_small_local_huggingface_"
-        f"baai_bge_small_en_v1_5_384_generic_v1_{server._retrieval_config_fingerprint()}"
+        f"baai_bge_small_en_v1_5_384_structure_v1_{server._retrieval_config_fingerprint()}"
     )
 
 
@@ -79,7 +79,7 @@ def test_embedding_config_status_reports_active_profile(monkeypatch):
     assert status["provider"] == "local_huggingface"
     assert status["model"] == "BAAI/bge-small-en-v1.5"
     assert status["dimension"] == 384
-    assert status["chunking_profile"] == "generic_v1"
+    assert status["chunking_profile"] == "structure_v1"
     assert len(status["embedding_fingerprint"]) == 16
     assert len(status["retrieval_fingerprint"]) == 16
 
@@ -112,7 +112,7 @@ def test_changing_only_chunking_config_changes_collection_name(monkeypatch):
     original_name = server._collection_name("knowledge")
 
     monkeypatch.setitem(
-        server.CONFIG["chunking"]["profiles"]["generic_v1"],
+        server.CONFIG["chunking"]["profiles"]["structure_v1"],
         "chunk_overlap",
         200,
     )
@@ -122,7 +122,7 @@ def test_changing_only_chunking_config_changes_collection_name(monkeypatch):
     assert changed_name != original_name
     assert changed_name.startswith(
         "knowledge_indexed_local_bge_small_local_huggingface_"
-        "baai_bge_small_en_v1_5_384_generic_v1_"
+        "baai_bge_small_en_v1_5_384_structure_v1_"
     )
 
 
@@ -141,5 +141,5 @@ def test_changing_only_embedding_normalize_changes_collection_name(monkeypatch):
     assert changed_name != original_name
     assert changed_name.startswith(
         "knowledge_indexed_local_bge_small_local_huggingface_"
-        "baai_bge_small_en_v1_5_384_generic_v1_"
+        "baai_bge_small_en_v1_5_384_structure_v1_"
     )

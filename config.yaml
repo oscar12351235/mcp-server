@@ -56,11 +56,11 @@ embedding:
       normalize: true
 
 chunking:
-  active_profile: "generic_v1"
+  active_profile: "structure_v1"
 
   profiles:
-    generic_v1:
-      strategy: "generic"
+    structure_v1:
+      strategy: "structure_aware"
       chunk_size: 1024
       chunk_overlap: 150
 

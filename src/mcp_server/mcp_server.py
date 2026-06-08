@@ -28,6 +28,8 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from mcp.server.fastmcp import FastMCP
 
+from mcp_server.retrieval.chunkers import chunk_file, chunk_markdown, chunks_to_documents
+
 # ---------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------
@@ -546,6 +548,23 @@ def _ensure_embedding_model() -> None:
     _EMBEDDING_MODEL_READY = True
 
 
+def _chunking_limits() -> tuple[int, int]:
+    chunking_cfg = _active_chunking_config()
+    max_chars = int(
+        chunking_cfg.get(
+            "chunk_size_chars",
+            chunking_cfg.get("chunk_size", 3000),
+        )
+    )
+    overlap_chars = int(
+        chunking_cfg.get(
+            "chunk_overlap_chars",
+            chunking_cfg.get("chunk_overlap", 300),
+        )
+    )
+    return max_chars, overlap_chars
+
+
 def _get_collection(
     name: str,
     force_rebuild: bool = False,
@@ -612,20 +631,52 @@ def _build_index(
 
 
 def _load_single_local_file(path: Path, source_type: str) -> list[Document]:
+    max_chars, overlap_chars = _chunking_limits()
+    base_metadata = {
+        "source_group": source_type,
+        "chunking_profile": _active_chunking_profile_name(),
+    }
+
     try:
-        loaded = SimpleDirectoryReader(
-            input_files=[str(path)],
-        ).load_data()
+        chunks = chunk_file(
+            path,
+            max_chars=max_chars,
+            overlap_chars=overlap_chars,
+            base_metadata=base_metadata,
+        )
+        return chunks_to_documents(chunks)
 
-        for doc in loaded:
-            doc.metadata["source_type"] = source_type
-            doc.metadata["file_path"] = str(path)
+    except Exception as exc:
+        logger.warning(
+            "Structure-aware chunking failed for %s; falling back to SimpleDirectoryReader: %s",
+            path,
+            exc,
+        )
 
-        return loaded
-
+    try:
+        loaded = SimpleDirectoryReader(input_files=[str(path)]).load_data()
     except Exception as exc:
         logger.warning("Could not load file %s: %s", path, exc)
         return []
+
+    for index, doc in enumerate(loaded):
+        text = doc.get_content()
+        content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+        doc.metadata.update(
+            {
+                "source_type": source_type,
+                "source_group": source_type,
+                "file_path": str(path),
+                "extension": path.suffix.lower(),
+                "chunk_index": index,
+                "chunk_type": "reader_fallback",
+                "content_hash": content_hash,
+                "text_hash": content_hash,
+                "chunking_profile": _active_chunking_profile_name(),
+            }
+        )
+
+    return loaded
 
 
 def _load_local_documents(paths: list[str], source_type: str) -> list[Document]:
@@ -633,6 +684,7 @@ def _load_local_documents(paths: list[str], source_type: str) -> list[Document]:
 
     allowed_suffixes = {
         ".md",
+        ".markdown",
         ".txt",
         ".pdf",
         ".py",
@@ -709,6 +761,7 @@ def _load_gitlab_skills() -> list[Document]:
         return []
 
     docs: list[Document] = []
+    max_chars, overlap_chars = _chunking_limits()
 
     for item in items:
         if item.get("type") != "blob":
@@ -725,17 +778,28 @@ def _load_gitlab_skills() -> list[Document]:
             logger.warning("Could not read GitLab file %s: %s", file_path, exc)
             continue
 
-        docs.append(
-            Document(
-                text=content,
-                metadata={
+        chunks = chunk_markdown(
+            file_path,
+            content,
+            max_chars=max_chars,
+            overlap_chars=overlap_chars,
+            base_metadata={
+                "source_group": "skills",
+                "chunking_profile": _active_chunking_profile_name(),
+                "project_id": project_id,
+                "branch": branch,
+            },
+        )
+        for doc in chunks_to_documents(chunks):
+            doc.metadata.update(
+                {
                     "source_type": "gitlab_skill",
                     "project_id": project_id,
                     "file_path": file_path,
                     "branch": branch,
-                },
+                }
             )
-        )
+            docs.append(doc)
 
     return docs
 
