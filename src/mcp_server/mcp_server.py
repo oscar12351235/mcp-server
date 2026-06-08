@@ -29,6 +29,16 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from mcp.server.fastmcp import FastMCP
 
 from mcp_server.retrieval.chunkers import chunk_file, chunk_markdown, chunks_to_documents
+from mcp_server.retrieval.manifest import (
+    detect_changes,
+    get_files_for_profile,
+    init_manifest_db,
+    manifest_chunk_from_metadata,
+    manifest_file_from_scan,
+    scan_paths,
+    upsert_chunk,
+    upsert_file,
+)
 
 # ---------------------------------------------------------------------
 # Logging
@@ -523,8 +533,35 @@ Settings.llm = MockLLM()
 
 CHROMA_PATH = PROJECT_ROOT / "storage" / "chroma"
 CHROMA_PATH.mkdir(parents=True, exist_ok=True)
+MANIFEST_DB_PATH = PROJECT_ROOT / "storage" / "index_manifest.sqlite"
 
 chroma_client = chromadb.PersistentClient(path=str(CHROMA_PATH))
+
+INDEXABLE_SUFFIXES = {
+    ".md",
+    ".markdown",
+    ".txt",
+    ".pdf",
+    ".py",
+    ".yaml",
+    ".yml",
+    ".epub",
+    ".docx",
+    ".json",
+    ".html",
+}
+
+IGNORED_INDEX_DIRS = {
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "node_modules",
+    "storage",
+}
 
 
 skills_index: VectorStoreIndex | None = None
@@ -682,32 +719,6 @@ def _load_single_local_file(path: Path, source_type: str) -> list[Document]:
 def _load_local_documents(paths: list[str], source_type: str) -> list[Document]:
     documents: list[Document] = []
 
-    allowed_suffixes = {
-        ".md",
-        ".markdown",
-        ".txt",
-        ".pdf",
-        ".py",
-        ".yaml",
-        ".yml",
-        ".epub",
-        ".docx",
-        ".json",
-        ".html",
-    }
-
-    ignored_dirs = {
-        ".git",
-        ".venv",
-        "venv",
-        "__pycache__",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        "node_modules",
-        "storage",
-    }
-
     for raw_path in paths:
         root = _assert_allowed_read(raw_path)
 
@@ -716,18 +727,18 @@ def _load_local_documents(paths: list[str], source_type: str) -> list[Document]:
             continue
 
         if root.is_file():
-            if root.suffix.lower() in allowed_suffixes:
+            if root.suffix.lower() in INDEXABLE_SUFFIXES:
                 documents.extend(_load_single_local_file(root, source_type))
             continue
 
         for path in root.rglob("*"):
-            if any(part in ignored_dirs for part in path.parts):
+            if any(part in IGNORED_INDEX_DIRS for part in path.parts):
                 continue
 
             if not path.is_file():
                 continue
 
-            if path.suffix.lower() not in allowed_suffixes:
+            if path.suffix.lower() not in INDEXABLE_SUFFIXES:
                 continue
 
             try:
@@ -804,6 +815,127 @@ def _load_gitlab_skills() -> list[Document]:
     return docs
 
 
+def _get_profile_collection_name(profile: str) -> str:
+    return _collection_name("knowledge", profile=profile)
+
+
+def _scan_profile_files(profile: str) -> list[Any]:
+    paths = _get_knowledge_paths(profile)
+    allowed_roots = [_assert_allowed_read(path) for path in paths]
+    return scan_paths(
+        allowed_roots,
+        INDEXABLE_SUFFIXES,
+        IGNORED_INDEX_DIRS,
+        validate_path=_assert_allowed_read,
+    )
+
+
+def _estimate_scan_chunks(scanned_files: list[Any]) -> tuple[int, int]:
+    max_chars, overlap_chars = _chunking_limits()
+    estimated_chunks = 0
+    estimated_tokens = 0
+
+    for scanned in scanned_files:
+        try:
+            chunks = chunk_file(
+                scanned.path,
+                max_chars=max_chars,
+                overlap_chars=overlap_chars,
+                base_metadata={"chunking_profile": _active_chunking_profile_name()},
+            )
+        except Exception:
+            estimated_chunks += 1
+            estimated_tokens += max(1, scanned.size_bytes // 4)
+            continue
+
+        estimated_chunks += len(chunks)
+        estimated_tokens += sum(max(1, len(chunk.text) // 4) for chunk in chunks)
+
+    return estimated_chunks, estimated_tokens
+
+
+def _serialize_manifest_file(row: Any) -> dict[str, Any]:
+    return {
+        "file_id": row.file_id,
+        "profile": row.profile,
+        "path": row.path,
+        "normalized_path": row.normalized_path,
+        "size_bytes": row.size_bytes,
+        "mtime_ns": row.mtime_ns,
+        "content_hash": row.content_hash,
+        "extension": row.extension,
+        "chunking_profile": row.chunking_profile,
+        "embedding_profile": row.embedding_profile,
+        "collection_name": row.collection_name,
+        "embedding_config_fingerprint": row.embedding_config_fingerprint,
+        "last_seen_at": row.last_seen_at,
+        "last_indexed_at": row.last_indexed_at,
+        "status": row.status,
+    }
+
+
+def _record_manifest_for_documents(
+    *,
+    profile: str,
+    documents: list[Document],
+    collection_name: str,
+) -> None:
+    scanned_files = _scan_profile_files(profile)
+    scanned_by_path = {scanned.normalized_path: scanned for scanned in scanned_files}
+    docs_by_path: dict[str, list[Document]] = {}
+
+    for doc in documents:
+        file_path = doc.metadata.get("file_path")
+        if not file_path:
+            continue
+        try:
+            normalized_path = str(Path(str(file_path)).expanduser().resolve())
+        except Exception:
+            continue
+        docs_by_path.setdefault(normalized_path, []).append(doc)
+
+    embedding_cfg = _active_embedding_config()
+    embedding_dimension = embedding_cfg.get("dimension")
+    if not isinstance(embedding_dimension, int):
+        embedding_dimension = None
+
+    for normalized_path, docs in docs_by_path.items():
+        scanned = scanned_by_path.get(normalized_path)
+        if not scanned:
+            continue
+
+        file_row = manifest_file_from_scan(
+            scanned,
+            profile=profile,
+            collection_name=collection_name,
+            embedding_config_fingerprint=_retrieval_config_fingerprint(),
+            chunking_profile=_active_chunking_profile_name(),
+            embedding_profile=_active_embedding_profile_name(),
+            last_indexed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        )
+        upsert_file(MANIFEST_DB_PATH, file_row)
+
+        for index, doc in enumerate(docs):
+            metadata = dict(doc.metadata)
+            text_hash = str(metadata.get("text_hash") or metadata.get("content_hash") or "")
+            if not text_hash:
+                text_hash = hashlib.sha256(doc.get_content().encode("utf-8")).hexdigest()[:16]
+
+            chunk_row = manifest_chunk_from_metadata(
+                file_row=file_row,
+                chunk_index=int(metadata.get("chunk_index", index)),
+                chunk_hash=text_hash,
+                text_hash=text_hash,
+                metadata=metadata,
+                embedding_provider=str(embedding_cfg.get("provider")),
+                embedding_model=str(embedding_cfg.get("model")),
+                embedding_dimension=embedding_dimension,
+                embedding_profile=_active_embedding_profile_name(),
+                chunking_profile=_active_chunking_profile_name(),
+            )
+            upsert_chunk(MANIFEST_DB_PATH, chunk_row)
+
+
 def _format_nodes(nodes: list[Any], max_chars: int = 1800) -> list[dict[str, Any]]:
     output: list[dict[str, Any]] = []
 
@@ -869,6 +1001,14 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
         force_rebuild=force_rebuild,
         collection_metadata=_collection_metadata("memory"),
     )
+
+    if force_rebuild:
+        logger.info("Recording indexed knowledge files in manifest...")
+        _record_manifest_for_documents(
+            profile=KNOWLEDGE_PROFILE,
+            documents=knowledge_docs,
+            collection_name=knowledge_collection_name,
+        )
 
     INDEX_STATUS = {
         "skills_collection": skills_collection_name,
@@ -952,6 +1092,71 @@ def collection_status() -> dict[str, Any]:
             "vectors": _collection_count(memory_collection_name),
             "embedding": _collection_metadata("memory"),
         },
+    }
+
+
+@mcp.tool()
+def scan_index_changes(profile: str | None = None) -> dict[str, Any]:
+    """Dry-run scan for knowledge files that need indexing."""
+    selected_profile = profile or KNOWLEDGE_PROFILE
+    collection_name = _get_profile_collection_name(selected_profile)
+    init_manifest_db(MANIFEST_DB_PATH)
+
+    scanned_files = _scan_profile_files(selected_profile)
+    manifest_files = get_files_for_profile(MANIFEST_DB_PATH, selected_profile)
+    changes = detect_changes(
+        selected_profile,
+        scanned_files,
+        manifest_files,
+        collection_name=collection_name,
+        embedding_config_fingerprint=_retrieval_config_fingerprint(),
+        chunking_profile=_active_chunking_profile_name(),
+        embedding_profile=_active_embedding_profile_name(),
+    )
+    estimated_chunks, estimated_tokens = _estimate_scan_chunks(scanned_files)
+
+    return {
+        "profile": selected_profile,
+        "manifest_path": str(MANIFEST_DB_PATH),
+        "collection_name": collection_name,
+        "embedding_config_fingerprint": _retrieval_config_fingerprint(),
+        "files_scanned": len(scanned_files),
+        "added": changes["added"],
+        "edited": changes["edited"],
+        "config_changed": changes["config_changed"],
+        "deleted": changes["deleted"],
+        "moved": changes["moved"],
+        "counts": {
+            "added": len(changes["added"]),
+            "edited": len(changes["edited"]),
+            "config_changed": len(changes["config_changed"]),
+            "deleted": len(changes["deleted"]),
+            "moved": len(changes["moved"]),
+        },
+        "estimated_chunks": estimated_chunks,
+        "estimated_tokens": estimated_tokens,
+        "dry_run": True,
+    }
+
+
+@mcp.tool()
+def list_indexed_files(profile: str | None = None) -> list[dict[str, Any]]:
+    """List file-level manifest rows for a knowledge profile."""
+    selected_profile = profile or KNOWLEDGE_PROFILE
+    files = get_files_for_profile(MANIFEST_DB_PATH, selected_profile)
+    return [_serialize_manifest_file(row) for row in files]
+
+
+@mcp.tool()
+def list_changed_files(profile: str | None = None) -> dict[str, list[dict[str, Any]]]:
+    """List changed files grouped by added, edited, deleted, and moved."""
+    status = scan_index_changes(profile)
+    return {
+        "added": status["added"],
+        "edited": status["edited"],
+        "config_changed": status["config_changed"],
+        "deleted": status["deleted"],
+        "moved": status["moved"],
     }
 
 
