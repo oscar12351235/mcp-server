@@ -147,3 +147,32 @@ def test_changing_only_embedding_normalize_changes_collection_name(monkeypatch):
         "knowledge_indexed_local_bge_small_local_huggingface_"
         "baai_bge_small_en_v1_5_384_structure_v1_"
     )
+
+
+def test_reranker_final_top_k_is_default_when_enabled(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+
+    monkeypatch.setitem(server.CONFIG["reranker"], "enabled", True)
+    monkeypatch.setitem(server.CONFIG["reranker"], "final_top_k", 6)
+    monkeypatch.setitem(server.CONFIG["retrieval"], "final_top_k", 11)
+
+    assert server._knowledge_final_top_k(None) == 6
+
+
+def test_explicit_top_k_overrides_reranker_final_top_k(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+
+    monkeypatch.setitem(server.CONFIG["reranker"], "enabled", True)
+    monkeypatch.setitem(server.CONFIG["reranker"], "final_top_k", 6)
+
+    assert server._knowledge_final_top_k(4) == 4
+
+
+def test_retrieval_final_top_k_is_default_when_reranker_disabled(monkeypatch):
+    server = import_server_with_profile(monkeypatch, "indexed")
+
+    monkeypatch.setitem(server.CONFIG["reranker"], "enabled", False)
+    monkeypatch.setitem(server.CONFIG["reranker"], "final_top_k", 6)
+    monkeypatch.setitem(server.CONFIG["retrieval"], "final_top_k", 11)
+
+    assert server._knowledge_final_top_k(None) == 11

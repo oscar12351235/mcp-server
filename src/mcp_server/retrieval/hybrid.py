@@ -14,6 +14,9 @@ class Candidate:
     rank: int
     dense_score: float | None = None
     bm25_score: float | None = None
+    fused_score: float | None = None
+    rerank_score: float | None = None
+    final_rank: int | None = None
     retrieval_sources: set[str] = field(default_factory=set)
 
 
@@ -57,6 +60,9 @@ def fuse_candidates(
                     rank=candidate.rank,
                     dense_score=candidate.dense_score,
                     bm25_score=candidate.bm25_score,
+                    fused_score=candidate.fused_score,
+                    rerank_score=candidate.rerank_score,
+                    final_rank=candidate.final_rank,
                     retrieval_sources=set(),
                 )
 
@@ -75,19 +81,24 @@ def fuse_candidates(
         sources = sorted(candidate.retrieval_sources)
         candidate.source = "both" if len(sources) > 1 else sources[0]
         candidate.score = fused_scores[key]
-        candidate.metadata = {
-            **candidate.metadata,
-            "retrieval_source": candidate.source,
-            "retrieval_sources": sources,
-            "dense_score": candidate.dense_score,
-            "bm25_score": candidate.bm25_score,
-            "fused_score": candidate.score,
-        }
+        candidate.fused_score = candidate.score
+        candidate.metadata = {**candidate.metadata}
         fused.append(candidate)
 
     fused.sort(key=lambda item: item.score, reverse=True)
 
     for index, candidate in enumerate(fused, start=1):
         candidate.rank = index
+        sources = sorted(candidate.retrieval_sources)
+        candidate.metadata.update(
+            {
+                "retrieval_source": candidate.source,
+                "retrieval_sources": sources,
+                "dense_score": candidate.dense_score,
+                "bm25_score": candidate.bm25_score,
+                "fused_score": candidate.fused_score,
+                "fused_rank": index,
+            }
+        )
 
     return fused[:fused_top_k]

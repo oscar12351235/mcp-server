@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -196,7 +196,7 @@ def init_manifest_db(path: str | Path) -> None:
 
 
 def scan_paths(
-    paths: list[str | Path],
+    paths: Sequence[str | Path],
     allowed_suffixes: set[str],
     ignored_dirs: set[str],
     validate_path: Callable[[Path], Any] | None = None,

@@ -51,6 +51,14 @@ retrieval:
     knowledge_top_k_max: 30
     memory_top_k_max: 10
 
+reranker:
+  enabled: true
+  provider: "local_huggingface"
+  model: "BAAI/bge-reranker-v2-m3"
+  candidate_top_k: 50
+  final_top_k: 8
+  batch_size: 8
+
 embedding:
   active_profile: "local_bge_small"
 

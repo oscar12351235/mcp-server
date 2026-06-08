@@ -45,6 +45,7 @@ from mcp_server.retrieval.manifest import (
     upsert_chunk,
     upsert_file,
 )
+from mcp_server.retrieval.rerankers import rerank_or_fallback
 
 # ---------------------------------------------------------------------
 # Logging
@@ -371,6 +372,60 @@ def _fused_top_k() -> int:
 
 def _fusion_method() -> str:
     return str(CONFIG["retrieval"].get("fusion", "rrf"))
+
+
+def _reranker_config() -> dict[str, Any]:
+    return dict(CONFIG.get("reranker", {}))
+
+
+def _reranker_enabled() -> bool:
+    return bool(_reranker_config().get("enabled", False))
+
+
+def _reranker_provider() -> str:
+    return str(_reranker_config().get("provider", "local_huggingface"))
+
+
+def _reranker_model() -> str:
+    return str(_reranker_config().get("model", "BAAI/bge-reranker-v2-m3"))
+
+
+def _reranker_candidate_top_k() -> int:
+    return int(_reranker_config().get("candidate_top_k", _fused_top_k()))
+
+
+def _reranker_final_top_k() -> int:
+    return int(_reranker_config().get("final_top_k", CONFIG["retrieval"].get("final_top_k", 8)))
+
+
+def _reranker_batch_size() -> int:
+    return int(_reranker_config().get("batch_size", 8))
+
+
+def _retrieval_final_top_k() -> int:
+    return int(CONFIG["retrieval"].get("final_top_k", _get_default_top_k("knowledge")))
+
+
+def _default_final_top_k() -> int:
+    if _reranker_enabled():
+        return _reranker_final_top_k()
+    return _retrieval_final_top_k()
+
+
+def _knowledge_final_top_k(top_k: int | None = None) -> int:
+    maximum = _get_max_top_k("knowledge")
+    return _bounded_top_k(top_k, min(_default_final_top_k(), maximum), maximum)
+
+
+def _reranker_status() -> dict[str, Any]:
+    return {
+        "enabled": _reranker_enabled(),
+        "provider": _reranker_provider(),
+        "model": _reranker_model(),
+        "candidate_top_k": _reranker_candidate_top_k(),
+        "final_top_k": _reranker_final_top_k(),
+        "batch_size": _reranker_batch_size(),
+    }
 
 
 def _bm25_index_path(collection_name: str) -> Path:
@@ -1044,8 +1099,19 @@ def _retrieve_knowledge_hybrid(query: str, final_top_k: int) -> list[dict[str, A
         fused_top_k=fused_k,
         method=_fusion_method(),
     )
+    reranked = rerank_or_fallback(
+        query,
+        fused,
+        enabled=_reranker_enabled(),
+        provider=_reranker_provider(),
+        model=_reranker_model(),
+        candidate_top_k=max(final_top_k, _reranker_candidate_top_k()),
+        final_top_k=final_top_k,
+        batch_size=_reranker_batch_size(),
+        logger=logger,
+    )
 
-    return _format_candidates(fused[:final_top_k])
+    return _format_candidates(reranked)
 
 
 def _knowledge_debug_payload(query: str, final_top_k: int) -> dict[str, Any]:
@@ -1069,15 +1135,28 @@ def _knowledge_debug_payload(query: str, final_top_k: int) -> dict[str, Any]:
         fused_top_k=fused_k,
         method=_fusion_method(),
     )
+    reranked_candidates = rerank_or_fallback(
+        query,
+        fused_candidates,
+        enabled=_reranker_enabled(),
+        provider=_reranker_provider(),
+        model=_reranker_model(),
+        candidate_top_k=max(final_top_k, _reranker_candidate_top_k()),
+        final_top_k=final_top_k,
+        batch_size=_reranker_batch_size(),
+        logger=logger,
+    )
 
     return {
         "query": query,
         "collection": knowledge_collection_name,
         "bm25_enabled": _bm25_enabled(),
         "bm25_index_path": str(_bm25_index_path(knowledge_collection_name)),
+        "reranker": _reranker_status(),
         "dense_candidates": _format_candidates(dense_candidates[:dense_k]),
         "bm25_candidates": _format_candidates(bm25_candidates[:bm25_k]),
         "fused_candidates": _format_candidates(fused_candidates[:final_top_k]),
+        "reranked_candidates": _format_candidates(reranked_candidates),
     }
 
 
@@ -1151,6 +1230,9 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
         "chunking_profile": _active_chunking_profile_name(),
         "bm25_enabled": str(_bm25_enabled()),
         "bm25_index_path": str(_bm25_index_path(knowledge_collection_name)),
+        "reranker_enabled": str(_reranker_enabled()),
+        "reranker_provider": _reranker_provider(),
+        "reranker_model": _reranker_model(),
         "mode": "force_rebuild" if force_rebuild else "load_existing_or_empty",
     }
 
@@ -1349,19 +1431,27 @@ def retrieve_knowledge(query: str, top_k: int | None = None) -> list[dict[str, A
 
     assert knowledge_index is not None
 
-    k = _bounded_top_k(
-        top_k,
-        int(CONFIG["retrieval"].get("final_top_k", _get_default_top_k("knowledge"))),
-        _get_max_top_k("knowledge"),
-    )
+    k = _knowledge_final_top_k(top_k)
 
     if _bm25_enabled():
         return _retrieve_knowledge_hybrid(query, k)
 
-    retriever = knowledge_index.as_retriever(similarity_top_k=k)
-    nodes = retriever.retrieve(query)
+    dense_k = max(k, _reranker_candidate_top_k())
+    retriever = knowledge_index.as_retriever(similarity_top_k=dense_k)
+    dense_candidates = _dense_candidates(retriever.retrieve(query))
+    reranked = rerank_or_fallback(
+        query,
+        dense_candidates,
+        enabled=_reranker_enabled(),
+        provider=_reranker_provider(),
+        model=_reranker_model(),
+        candidate_top_k=max(k, _reranker_candidate_top_k()),
+        final_top_k=k,
+        batch_size=_reranker_batch_size(),
+        logger=logger,
+    )
 
-    return _format_nodes(nodes)
+    return _format_candidates(reranked)
 
 
 @mcp.tool()
@@ -1371,24 +1461,34 @@ def retrieve_knowledge_debug(query: str, top_k: int | None = None) -> dict[str, 
 
     assert knowledge_index is not None
 
-    k = _bounded_top_k(
-        top_k,
-        int(CONFIG["retrieval"].get("final_top_k", _get_default_top_k("knowledge"))),
-        _get_max_top_k("knowledge"),
-    )
+    k = _knowledge_final_top_k(top_k)
 
     if _bm25_enabled():
         return _knowledge_debug_payload(query, k)
 
-    dense_retriever = knowledge_index.as_retriever(similarity_top_k=k)
+    dense_k = max(k, _reranker_candidate_top_k())
+    dense_retriever = knowledge_index.as_retriever(similarity_top_k=dense_k)
     dense_candidates = _dense_candidates(dense_retriever.retrieve(query))
+    reranked_candidates = rerank_or_fallback(
+        query,
+        dense_candidates,
+        enabled=_reranker_enabled(),
+        provider=_reranker_provider(),
+        model=_reranker_model(),
+        candidate_top_k=max(k, _reranker_candidate_top_k()),
+        final_top_k=k,
+        batch_size=_reranker_batch_size(),
+        logger=logger,
+    )
     return {
         "query": query,
         "collection": _collection_name("knowledge"),
         "bm25_enabled": False,
+        "reranker": _reranker_status(),
         "dense_candidates": _format_candidates(dense_candidates),
         "bm25_candidates": [],
         "fused_candidates": _format_candidates(dense_candidates),
+        "reranked_candidates": _format_candidates(reranked_candidates),
     }
 
 
