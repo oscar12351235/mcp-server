@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import base64
+import hashlib
+import json
 import logging
 import os
 import re
@@ -51,6 +53,80 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 CONFIG_PATH = PROJECT_ROOT / "config.yaml"
 CONFIG = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+
+
+def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
+    required_sections = ["gitlab", "knowledge", "memory", "retrieval", "security"]
+    missing_sections = [section for section in required_sections if section not in config]
+    if missing_sections:
+        raise ValueError(f"Missing required config sections: {', '.join(missing_sections)}")
+
+    retrieval = config["retrieval"]
+    if "defaults" not in retrieval or "limits" not in retrieval:
+        raise ValueError("retrieval.defaults and retrieval.limits are required")
+
+    embedding = config.setdefault("embedding", {})
+    profiles = embedding.setdefault("profiles", {})
+
+    if not profiles:
+        legacy_model = retrieval.get("embedding_model")
+        if not legacy_model:
+            raise ValueError("embedding.profiles or retrieval.embedding_model is required")
+
+        profiles["legacy"] = {
+            "provider": "local_huggingface",
+            "model": legacy_model,
+            "dimension": "default",
+            "normalize": True,
+        }
+        embedding.setdefault("active_profile", "legacy")
+
+    active_embedding_profile = embedding.get("active_profile")
+    if not active_embedding_profile:
+        raise ValueError("embedding.active_profile is required")
+    if active_embedding_profile not in profiles:
+        available = ", ".join(sorted(profiles))
+        raise ValueError(
+            f"Unknown embedding profile: {active_embedding_profile}. "
+            f"Available profiles: {available}"
+        )
+
+    active_embedding = profiles[active_embedding_profile]
+    for key in ("provider", "model"):
+        if not active_embedding.get(key):
+            raise ValueError(f"embedding profile {active_embedding_profile} requires {key}")
+
+    provider = active_embedding["provider"]
+    if provider != "local_huggingface":
+        raise ValueError(
+            f"Embedding provider is configured but not implemented in this phase: {provider}"
+        )
+
+    chunking = config.setdefault("chunking", {})
+    chunking_profiles = chunking.setdefault(
+        "profiles",
+        {
+            "generic_v1": {
+                "strategy": "generic",
+                "chunk_size": 1024,
+                "chunk_overlap": 150,
+            }
+        },
+    )
+    chunking.setdefault("active_profile", "generic_v1")
+
+    active_chunking_profile = chunking["active_profile"]
+    if active_chunking_profile not in chunking_profiles:
+        available = ", ".join(sorted(chunking_profiles))
+        raise ValueError(
+            f"Unknown chunking profile: {active_chunking_profile}. "
+            f"Available profiles: {available}"
+        )
+
+    return config
+
+
+CONFIG = _validate_config(CONFIG)
 
 KNOWLEDGE_PROFILE = os.environ.get(
     "MCP_KNOWLEDGE_PROFILE",
@@ -155,6 +231,88 @@ def _collection_count(name: str) -> int:
         return collection.count()
     except Exception:
         return 0
+
+
+def _safe_collection_component(text: str | int | bool | None) -> str:
+    clean = re.sub(r"[^a-zA-Z0-9]+", "_", str(text or "default"))
+    return clean.strip("_").lower() or "default"
+
+
+def _active_embedding_profile_name() -> str:
+    return str(CONFIG["embedding"]["active_profile"])
+
+
+def _active_embedding_config() -> dict[str, Any]:
+    profile = _active_embedding_profile_name()
+    return dict(CONFIG["embedding"]["profiles"][profile])
+
+
+def _active_chunking_profile_name() -> str:
+    return str(CONFIG["chunking"]["active_profile"])
+
+
+def _active_chunking_config() -> dict[str, Any]:
+    profile = _active_chunking_profile_name()
+    return dict(CONFIG["chunking"]["profiles"][profile])
+
+
+def _embedding_config_fingerprint() -> str:
+    payload = {
+        "profile": _active_embedding_profile_name(),
+        **_active_embedding_config(),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
+
+
+def _retrieval_config_fingerprint() -> str:
+    payload = {
+        "embedding_profile": _active_embedding_profile_name(),
+        "embedding": _active_embedding_config(),
+        "chunking_profile": _active_chunking_profile_name(),
+        "chunking": _active_chunking_config(),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
+
+
+def _collection_name(domain: str, profile: str | None = None) -> str:
+    allowed_domains = {"skills", "knowledge", "memory", "code"}
+    if domain not in allowed_domains:
+        available = ", ".join(sorted(allowed_domains))
+        raise ValueError(f"Unknown collection domain: {domain}. Available domains: {available}")
+
+    embedding_cfg = _active_embedding_config()
+    profile_component = profile or (KNOWLEDGE_PROFILE if domain == "knowledge" else "global")
+    dimension = embedding_cfg.get("dimension", "default")
+
+    parts = [
+        domain,
+        profile_component,
+        _active_embedding_profile_name(),
+        embedding_cfg["provider"],
+        embedding_cfg["model"],
+        dimension,
+        _active_chunking_profile_name(),
+        _retrieval_config_fingerprint(),
+    ]
+
+    return "_".join(_safe_collection_component(part) for part in parts)
+
+
+def _collection_metadata(domain: str, profile: str | None = None) -> dict[str, str]:
+    embedding_cfg = _active_embedding_config()
+    return {
+        "domain": domain,
+        "knowledge_profile": profile or (KNOWLEDGE_PROFILE if domain == "knowledge" else "global"),
+        "embedding_profile": _active_embedding_profile_name(),
+        "embedding_provider": str(embedding_cfg["provider"]),
+        "embedding_model": str(embedding_cfg["model"]),
+        "embedding_dimension": str(embedding_cfg.get("dimension", "default")),
+        "embedding_fingerprint": _embedding_config_fingerprint(),
+        "retrieval_fingerprint": _retrieval_config_fingerprint(),
+        "chunking_profile": _active_chunking_profile_name(),
+    }
 
 
 def _slugify(text: str) -> str:
@@ -384,11 +542,15 @@ def _ensure_embedding_model() -> None:
     if _EMBEDDING_MODEL_READY:
         return
 
-    Settings.embed_model = HuggingFaceEmbedding(model_name=CONFIG["retrieval"]["embedding_model"])
+    Settings.embed_model = HuggingFaceEmbedding(model_name=_active_embedding_config()["model"])
     _EMBEDDING_MODEL_READY = True
 
 
-def _get_collection(name: str, force_rebuild: bool = False):
+def _get_collection(
+    name: str,
+    force_rebuild: bool = False,
+    metadata: dict[str, str] | None = None,
+):
     if force_rebuild:
         try:
             chroma_client.delete_collection(name)
@@ -396,17 +558,22 @@ def _get_collection(name: str, force_rebuild: bool = False):
         except Exception:
             pass
 
-    return chroma_client.get_or_create_collection(name)
+    return chroma_client.get_or_create_collection(name, metadata=metadata)
 
 
 def _build_index(
     collection_name: str,
     docs: list[Document],
     force_rebuild: bool = False,
+    collection_metadata: dict[str, str] | None = None,
 ) -> VectorStoreIndex:
     _ensure_embedding_model()
 
-    collection = _get_collection(collection_name, force_rebuild=force_rebuild)
+    collection = _get_collection(
+        collection_name,
+        force_rebuild=force_rebuild,
+        metadata=collection_metadata,
+    )
     vector_store = ChromaVectorStore(chroma_collection=collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
@@ -471,12 +638,8 @@ def _load_local_documents(paths: list[str], source_type: str) -> list[Document]:
         ".py",
         ".yaml",
         ".yml",
-        ".png",
         ".epub",
         ".docx",
-        ".csv",
-        ".xlsx",
-        ".parquet",
         ".json",
         ".html",
     }
@@ -599,7 +762,9 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
     global skills_index, knowledge_index, memory_index, INDEX_STATUS
 
     knowledge_paths = _get_knowledge_paths()
-    knowledge_collection_name = f"knowledge_{KNOWLEDGE_PROFILE}"
+    skills_collection_name = _collection_name("skills")
+    knowledge_collection_name = _collection_name("knowledge")
+    memory_collection_name = _collection_name("memory")
 
     if force_rebuild:
         logger.info("Force rebuild enabled. Loading source documents...")
@@ -619,9 +784,10 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
 
     logger.info("Building/loading skills index...")
     skills_index = _build_index(
-        "skills",
+        skills_collection_name,
         skills_docs,
         force_rebuild=force_rebuild,
+        collection_metadata=_collection_metadata("skills"),
     )
 
     logger.info("Building/loading knowledge index...")
@@ -629,21 +795,27 @@ def _rebuild_all_indexes(force_rebuild: bool = False) -> dict[str, str]:
         knowledge_collection_name,
         knowledge_docs,
         force_rebuild=force_rebuild,
+        collection_metadata=_collection_metadata("knowledge"),
     )
 
     logger.info("Building/loading memory index...")
     memory_index = _build_index(
-        "memory",
+        memory_collection_name,
         memory_docs,
         force_rebuild=force_rebuild,
+        collection_metadata=_collection_metadata("memory"),
     )
 
     INDEX_STATUS = {
-        "skills_collection": "skills",
+        "skills_collection": skills_collection_name,
         "knowledge_collection": knowledge_collection_name,
-        "memory_collection": "memory",
+        "memory_collection": memory_collection_name,
         "knowledge_profile": KNOWLEDGE_PROFILE,
         "knowledge_paths": ", ".join(knowledge_paths),
+        "embedding_profile": _active_embedding_profile_name(),
+        "embedding_fingerprint": _embedding_config_fingerprint(),
+        "retrieval_fingerprint": _retrieval_config_fingerprint(),
+        "chunking_profile": _active_chunking_profile_name(),
         "mode": "force_rebuild" if force_rebuild else "load_existing_or_empty",
     }
 
@@ -663,24 +835,58 @@ def _ensure_indexes() -> None:
 
 
 @mcp.tool()
+def embedding_config_status() -> dict[str, Any]:
+    """Show active embedding and chunking config without exposing secrets."""
+    embedding_cfg = _active_embedding_config()
+    chunking_cfg = _active_chunking_config()
+
+    return {
+        "embedding_profile": _active_embedding_profile_name(),
+        "provider": embedding_cfg["provider"],
+        "model": embedding_cfg["model"],
+        "dimension": embedding_cfg.get("dimension", "default"),
+        "normalize": embedding_cfg.get("normalize"),
+        "embedding_fingerprint": _embedding_config_fingerprint(),
+        "retrieval_fingerprint": _retrieval_config_fingerprint(),
+        "chunking_profile": _active_chunking_profile_name(),
+        "chunking": chunking_cfg,
+    }
+
+
+@mcp.tool()
+def config_status() -> dict[str, Any]:
+    """Show active non-secret config profiles."""
+    return {
+        "knowledge_profile": KNOWLEDGE_PROFILE,
+        "knowledge_paths": _get_knowledge_paths(),
+        "embedding": embedding_config_status(),
+    }
+
+
+@mcp.tool()
 def collection_status() -> dict[str, Any]:
     """Show Chroma collection names and vector counts."""
-    knowledge_collection_name = f"knowledge_{KNOWLEDGE_PROFILE}"
+    skills_collection_name = _collection_name("skills")
+    knowledge_collection_name = _collection_name("knowledge")
+    memory_collection_name = _collection_name("memory")
 
     return {
         "skills": {
-            "collection": "skills",
-            "vectors": _collection_count("skills"),
+            "collection": skills_collection_name,
+            "vectors": _collection_count(skills_collection_name),
+            "embedding": _collection_metadata("skills"),
         },
         "knowledge": {
             "collection": knowledge_collection_name,
             "profile": KNOWLEDGE_PROFILE,
             "vectors": _collection_count(knowledge_collection_name),
             "paths": _get_knowledge_paths(),
+            "embedding": _collection_metadata("knowledge"),
         },
         "memory": {
-            "collection": "memory",
-            "vectors": _collection_count("memory"),
+            "collection": memory_collection_name,
+            "vectors": _collection_count(memory_collection_name),
+            "embedding": _collection_metadata("memory"),
         },
     }
 

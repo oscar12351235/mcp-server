@@ -45,6 +45,25 @@ retrieval:
     knowledge_top_k_max: 20
     memory_top_k_max: 10
 
+embedding:
+  active_profile: "local_bge_small"
+
+  profiles:
+    local_bge_small:
+      provider: "local_huggingface"
+      model: "BAAI/bge-small-en-v1.5"
+      dimension: 384
+      normalize: true
+
+chunking:
+  active_profile: "generic_v1"
+
+  profiles:
+    generic_v1:
+      strategy: "generic"
+      chunk_size: 1024
+      chunk_overlap: 150
+
 security:
   allow_gitlab_write: true
   allow_direct_main_write: false
