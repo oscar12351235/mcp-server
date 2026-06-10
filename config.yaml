@@ -55,6 +55,8 @@ code_retrieval:
         - ".ruff_cache"
         - "coverage.xml"
         - "htmlcov"
+        - "eval/results/*"
+        - "eval/baselines/*"
 
   allowed_extensions:
     - ".py"
@@ -184,4 +186,5 @@ security:
     - "/Users/oscarbonnet/PycharmProjects/mcp-server/.env"
     - "/Users/oscarbonnet/PycharmProjects/mcp-server/.venv"
     - "/Users/oscarbonnet/PycharmProjects/mcp-server/storage"
+    - "/Users/oscarbonnet/PycharmProjects/mcp-server/config.yaml"
     - "/Users/oscarbonnet/PycharmProjects/python-project-template"

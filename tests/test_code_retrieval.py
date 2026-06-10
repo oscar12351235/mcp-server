@@ -276,3 +276,70 @@ def test_script_query_intent_ranks_scripts_above_source():
     )
 
     assert [candidate.chunk_id for candidate in ranked] == ["scripts", "source"]
+
+
+def test_locate_python_symbol_finds_functions_classes_methods_and_assignments():
+    from mcp_server.retrieval.code_retrieval import locate_python_symbol
+
+    source = CLASS_SOURCE
+
+    assert locate_python_symbol(source, "Worker") == (6, 14)
+    assert locate_python_symbol(source, "Worker.run") == (9, 11)
+    assert locate_python_symbol(source, "build_worker") == (16, 17)
+    assert locate_python_symbol(source, "mcp") == (4, 4)
+    assert locate_python_symbol(source, "__imports__") == (1, 2)
+    assert locate_python_symbol(source, "no_such_symbol") is None
+    assert locate_python_symbol("def broken(:", "broken") is None
+
+
+def test_bm25_runtime_index_is_cached_and_invalidated_on_rewrite(tmp_path):
+    import os
+
+    from llama_index.core import Document
+
+    from mcp_server.retrieval.bm25_store import load_bm25_runtime_index
+
+    index_path = tmp_path / "cache_test.jsonl"
+    write_bm25_index(
+        index_path,
+        [Document(text="def first_function(): pass", metadata={"chunk_id": "a"})],
+    )
+
+    first = load_bm25_runtime_index(index_path)
+    assert load_bm25_runtime_index(index_path) is first
+
+    write_bm25_index(
+        index_path,
+        [Document(text="def second_function(): pass", metadata={"chunk_id": "b"})],
+    )
+    os.utime(index_path, ns=(index_path.stat().st_atime_ns, index_path.stat().st_mtime_ns + 1))
+
+    second = load_bm25_runtime_index(index_path)
+    assert second is not first
+    assert "second_function" in second.documents[0].text
+
+
+def test_prefer_source_handles_negative_rerank_scores():
+    docs = Candidate(
+        chunk_id="docs",
+        text="fuse_candidates docs",
+        metadata={"file_role": "docs"},
+        score=-1.0,
+        source="dense",
+        rank=1,
+        retrieval_sources={"dense"},
+    )
+    source = Candidate(
+        chunk_id="source",
+        text="def fuse_candidates(): pass",
+        metadata={"file_role": "source"},
+        score=-2.0,
+        source="dense",
+        rank=2,
+        retrieval_sources={"dense"},
+    )
+
+    ranked = prefer_source_code_candidates([docs, source], query="fuse_candidates implementation")
+
+    assert ranked[0].chunk_id == "source"
+    assert ranked[0].score > -2.0

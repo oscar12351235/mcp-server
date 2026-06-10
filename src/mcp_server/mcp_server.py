@@ -29,7 +29,7 @@ from mcp.server.fastmcp import FastMCP
 
 from mcp_server.retrieval.bm25_store import (
     bm25_retrieve,
-    load_bm25_index,
+    load_bm25_runtime_index,
     write_bm25_index,
 )
 from mcp_server.retrieval.chunkers import chunk_file, chunk_markdown, chunks_to_documents
@@ -37,6 +37,7 @@ from mcp_server.retrieval.code_loader import configured_code_repos, load_code_do
 from mcp_server.retrieval.code_retrieval import (
     find_symbol_candidate,
     format_code_candidates,
+    locate_python_symbol,
     retrieve_code_candidates,
 )
 from mcp_server.retrieval.embeddings import (
@@ -268,6 +269,19 @@ def _collection_count(name: str) -> int:
         return collection.count()
     except Exception:
         return 0
+
+
+def _collection_is_placeholder(name: str) -> bool:
+    """True when a collection holds only the 'No documents loaded.' placeholder."""
+    try:
+        collection = chroma_client.get_collection(name)
+        if collection.count() != 1:
+            return False
+        data = collection.get(limit=1, include=["metadatas"])
+        metadatas = data.get("metadatas") or []
+        return bool(metadatas) and metadatas[0].get("source") == "empty"
+    except Exception:
+        return False
 
 
 def _safe_collection_component(text: str | int | bool | None) -> str:
@@ -1336,8 +1350,8 @@ def _retrieve_knowledge_hybrid(query: str, final_top_k: int) -> list[dict[str, A
     dense_retriever = knowledge_index.as_retriever(similarity_top_k=dense_k)
     dense_candidates = _dense_candidates(dense_retriever.retrieve(query))
 
-    bm25_documents = load_bm25_index(_bm25_index_path(knowledge_collection_name))
-    bm25_candidates = bm25_retrieve(query, bm25_documents, top_k=bm25_k)
+    bm25_index = load_bm25_runtime_index(_bm25_index_path(knowledge_collection_name))
+    bm25_candidates = bm25_retrieve(query, bm25_index, top_k=bm25_k)
 
     fused = fuse_candidates(
         dense_candidates,
@@ -1378,7 +1392,7 @@ def _knowledge_debug_payload(query: str, final_top_k: int) -> dict[str, Any]:
     dense_candidates = _dense_candidates(dense_retriever.retrieve(query))
     bm25_candidates = bm25_retrieve(
         query,
-        load_bm25_index(_bm25_index_path(knowledge_collection_name)),
+        load_bm25_runtime_index(_bm25_index_path(knowledge_collection_name)),
         top_k=bm25_k,
     )
     fused_candidates = fuse_candidates(
@@ -1576,22 +1590,6 @@ def embedding_config_status() -> dict[str, Any]:
 
 
 @mcp.tool()
-def embedding_status() -> dict[str, Any]:
-    """Show active embedding profile and model-specific collection names."""
-    return embedding_config_status()
-
-
-@mcp.tool()
-def config_status() -> dict[str, Any]:
-    """Show active non-secret config profiles."""
-    return {
-        "knowledge_profile": KNOWLEDGE_PROFILE,
-        "knowledge_paths": _get_knowledge_paths(),
-        "embedding": embedding_config_status(),
-    }
-
-
-@mcp.tool()
 def retrieval_config_status() -> dict[str, Any]:
     """Show active retrieval pipeline config: top_k values, BM25, fusion, reranker."""
     retrieval_cfg = CONFIG.get("retrieval", {})
@@ -1691,18 +1689,21 @@ def collection_status() -> dict[str, Any]:
         "skills": {
             "collection": skills_collection_name,
             "vectors": _collection_count(skills_collection_name),
+            "placeholder": _collection_is_placeholder(skills_collection_name),
             "embedding": _collection_metadata("skills"),
         },
         "knowledge": {
             "collection": knowledge_collection_name,
             "profile": KNOWLEDGE_PROFILE,
             "vectors": _collection_count(knowledge_collection_name),
+            "placeholder": _collection_is_placeholder(knowledge_collection_name),
             "paths": _get_knowledge_paths(),
             "embedding": _collection_metadata("knowledge"),
         },
         "memory": {
             "collection": memory_collection_name,
             "vectors": _collection_count(memory_collection_name),
+            "placeholder": _collection_is_placeholder(memory_collection_name),
             "embedding": _collection_metadata("memory"),
         },
         "code": {
@@ -1710,8 +1711,68 @@ def collection_status() -> dict[str, Any]:
             "profile": _active_code_profile_name(),
             "enabled": _code_retrieval_enabled(),
             "vectors": _collection_count(code_collection_name),
+            "placeholder": _collection_is_placeholder(code_collection_name),
             "embedding": _collection_metadata("code", profile=_active_code_profile_name()),
         },
+    }
+
+
+def _expected_collection_names() -> set[str]:
+    expected = {
+        _collection_name("skills"),
+        _collection_name("memory"),
+        _code_collection_name(),
+    }
+    knowledge_profiles = CONFIG["knowledge"].get("profiles") or {KNOWLEDGE_PROFILE: {}}
+    for profile in knowledge_profiles:
+        expected.add(_collection_name("knowledge", profile=profile))
+    return expected
+
+
+@mcp.tool()
+def cleanup_stale_collections(dry_run: bool = True) -> dict[str, Any]:
+    """
+    List (dry_run=True) or delete (dry_run=False) Chroma collections and BM25
+    index files left behind by previous embedding/chunking configurations.
+
+    Only artifacts under storage/ are touched; everything is regenerable via
+    rebuild_indexes().
+    """
+    expected_collections = _expected_collection_names()
+    expected_bm25_files = {_bm25_index_path(name).name for name in expected_collections}
+
+    stale_collections = sorted(
+        collection.name
+        for collection in chroma_client.list_collections()
+        if collection.name not in expected_collections
+    )
+    stale_bm25_files = sorted(
+        path.name for path in BM25_PATH.glob("*.jsonl") if path.name not in expected_bm25_files
+    )
+
+    deleted_collections: list[str] = []
+    deleted_bm25_files: list[str] = []
+    if not dry_run:
+        for name in stale_collections:
+            try:
+                chroma_client.delete_collection(name)
+                deleted_collections.append(name)
+            except Exception as exc:
+                logger.warning("Could not delete stale collection %s: %s", name, exc)
+        for name in stale_bm25_files:
+            try:
+                (BM25_PATH / name).unlink()
+                deleted_bm25_files.append(name)
+            except Exception as exc:
+                logger.warning("Could not delete stale BM25 file %s: %s", name, exc)
+
+    return {
+        "dry_run": dry_run,
+        "expected_collections": sorted(expected_collections),
+        "stale_collections": stale_collections,
+        "stale_bm25_files": stale_bm25_files,
+        "deleted_collections": deleted_collections,
+        "deleted_bm25_files": deleted_bm25_files,
     }
 
 
@@ -1726,7 +1787,7 @@ def list_code_repos() -> list[dict[str, Any]]:
 def code_index_status() -> dict[str, Any]:
     """Show code retrieval index status."""
     collection_name = _code_collection_name()
-    bm25_documents = load_bm25_index(_bm25_index_path(collection_name))
+    bm25_documents = load_bm25_runtime_index(_bm25_index_path(collection_name)).documents
     files = {
         f"{doc.metadata.get('repo_name')}:{doc.metadata.get('file_path')}" for doc in bm25_documents
     }
@@ -1769,7 +1830,15 @@ def scan_index_changes(profile: str | None = None) -> dict[str, Any]:
         chunking_profile=_active_chunking_profile_name(),
         embedding_profile=_active_embedding_profile_name(),
     )
-    estimated_chunks, estimated_tokens = _estimate_scan_chunks(scanned_files)
+    changed_paths = {
+        item.get("normalized_path") or item.get("new_normalized_path")
+        for group in ("added", "edited", "config_changed", "moved")
+        for item in changes[group]
+    }
+    changed_scanned = [
+        scanned for scanned in scanned_files if scanned.normalized_path in changed_paths
+    ]
+    estimated_chunks, estimated_tokens = _estimate_scan_chunks(changed_scanned)
 
     return {
         "profile": selected_profile,
@@ -1791,6 +1860,7 @@ def scan_index_changes(profile: str | None = None) -> dict[str, Any]:
         },
         "estimated_chunks": estimated_chunks,
         "estimated_tokens": estimated_tokens,
+        "estimate_scope": "changed_files_only",
         "dry_run": True,
     }
 
@@ -1961,12 +2031,6 @@ def knowledge_profile_status() -> dict[str, Any]:
 
 
 @mcp.tool()
-def index_status() -> dict[str, str]:
-    """Show current index status."""
-    return INDEX_STATUS
-
-
-@mcp.tool()
 def retrieve_skills(query: str, top_k: int | None = None) -> list[dict[str, Any]]:
     """Retrieve relevant GitLab skill files for a task."""
     _ensure_indexes()
@@ -2096,10 +2160,12 @@ def retrieve_code(
         reranker_candidate_top_k=max(k, _reranker_candidate_top_k()),
         final_top_k=k,
         reranker_batch_size=_reranker_batch_size(),
+        bm25_enabled=_bm25_enabled(),
         logger=logger,
     )
 
-    mode = "hybrid+rerank" if _reranker_enabled() else "hybrid"
+    base_mode = "hybrid" if _bm25_enabled() else "dense"
+    mode = f"{base_mode}+rerank" if _reranker_enabled() else base_mode
     context = _observability_context(
         domain="code",
         mode=mode,
@@ -2122,7 +2188,7 @@ def read_code_symbol(
     collection_name = _code_collection_name()
     bm25_candidates = bm25_retrieve(
         symbol_name,
-        load_bm25_index(_bm25_index_path(collection_name)),
+        load_bm25_runtime_index(_bm25_index_path(collection_name)),
         top_k=200,
     )
     candidate = find_symbol_candidate(
@@ -2136,9 +2202,34 @@ def read_code_symbol(
 
     metadata = candidate.metadata
     absolute_path = _assert_allowed_read(str(metadata.get("absolute_file_path", "")))
-    start_line = int(metadata.get("start_line", 1))
-    end_line = int(metadata.get("end_line", start_line))
-    lines = absolute_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    indexed_start_line = int(metadata.get("start_line", 1))
+    indexed_end_line = int(metadata.get("end_line", indexed_start_line))
+    text = absolute_path.read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
+
+    # The index may be stale relative to the working tree, so indexed line
+    # numbers cannot be trusted. For Python files, re-locate the symbol in the
+    # current source; for other files, verify the slice still contains the
+    # symbol before returning it.
+    relocated = False
+    if absolute_path.suffix.lower() == ".py":
+        located = locate_python_symbol(text, str(metadata.get("qualified_symbol") or symbol_name))
+        if located is None:
+            raise RuntimeError(
+                f"Symbol {symbol_name!r} no longer exists in {absolute_path}. "
+                "The code index is stale; run rebuild_indexes() to refresh it."
+            )
+        start_line, end_line = located
+        relocated = (start_line, end_line) != (indexed_start_line, indexed_end_line)
+    else:
+        start_line, end_line = indexed_start_line, indexed_end_line
+        slice_text = "\n".join(lines[start_line - 1 : end_line])
+        if symbol_name not in slice_text:
+            raise RuntimeError(
+                f"Indexed lines for {symbol_name!r} in {absolute_path} no longer match. "
+                "The code index is stale; run rebuild_indexes() to refresh it."
+            )
+
     source = "\n".join(lines[start_line - 1 : end_line])
 
     return {
@@ -2148,6 +2239,9 @@ def read_code_symbol(
         "absolute_file_path": str(absolute_path),
         "start_line": start_line,
         "end_line": end_line,
+        "indexed_start_line": indexed_start_line,
+        "indexed_end_line": indexed_end_line,
+        "relocated": relocated,
         "metadata": metadata,
         "source": source,
     }

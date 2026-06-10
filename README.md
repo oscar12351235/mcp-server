@@ -1,334 +1,126 @@
 # Personal MCP Server
 
-Local MCP server for personal skills, local knowledge retrieval, project file access, and persistent memory proposals.
+Local MCP server for GitLab-hosted skills, local knowledge retrieval, code-aware repository retrieval, and persistent memory proposals.
 
-This server is designed to be used by Claude Code, VS Code Copilot, PyCharm AI Assistant, or any MCP-compatible client.
+Designed to be launched by Claude Code, Cursor, Codex, VS Code Copilot, PyCharm AI, or any MCP-compatible stdio client. The LLM is provided by the client; this server only does retrieval, file access, and proposal writing.
 
-## Purpose
-
-This project provides a local MCP server that exposes tools for:
-
-* Retrieving reusable skills stored in a GitLab skills repository
-* Retrieving local knowledge from selected folders
-* Retrieving personal/project memory from local markdown files
-* Reading allowlisted local files
-* Listing allowlisted local directories
-* Reading allowlisted GitLab files
-* Proposing new memory entries
-* Proposing new GitLab skills through merge requests
-
-The LLM is not provided by this project. Claude, Copilot, or another MCP client acts as the LLM and orchestrator.
-
-## Architecture
+## Retrieval pipeline
 
 ```text
-                       Claude / Copilot / PyCharm AI
-                                     ↓
-                              Local MCP server
-                                     ↓
-         ┌───────────────────────────┬───────────────────────────┐
-         ↓                           ↓                           ↓
-    GitLab skills repo        Local knowledge               Local memory
-    skills/*.md               books/notes/docs              preferences/projects
-         ↓                           ↓                           ↓
-    LlamaIndex retrieval      LlamaIndex retrieval          LlamaIndex retrieval
-         ↓             ↓             ↓              ↓            ↓
-                       Local ChromaDB vector storage
+query
+  ↓
+dense retrieval (local ChromaDB) + BM25 lexical retrieval
+  ↓
+reciprocal rank fusion (RRF)
+  ↓
+optional cross-encoder reranking (BAAI/bge-reranker-v2-m3)
+  ↓
+role-aware re-weighting for code (source > tests > scripts > config > docs)
+  ↓
+final top-k chunks with full score breakdown
 ```
+
+Four retrieval domains, each with its own Chroma collection:
+
+* **skills** — markdown skills from the GitLab skills repo (dense only)
+* **knowledge** — local notes/books/papers from the active knowledge profile (hybrid + rerank)
+* **memory** — local markdown memory files (dense only)
+* **code** — symbol-level chunks from configured local repos (hybrid + rerank, AST-aware)
+
+Collection names embed the embedding profile, provider, model, dimension, chunking profile, and a config fingerprint, so changing any retrieval-relevant config automatically creates a new collection instead of silently reusing stale vectors. `cleanup_stale_collections` removes leftovers from old configs.
 
 ## Main components
 
-* `src/mcp_server/mcp_server.py`: main MCP server implementation
-* `config.yaml`: local configuration, paths, retrieval settings, and security allowlists
-* `.env`: local secrets such as GitLab token; not committed
-* `storage/chroma/`: local ChromaDB vector storage; not committed
-* GitLab `skills` repo: reusable skill markdown files
+* `src/mcp_server/mcp_server.py` — MCP server and tool definitions
+* `src/mcp_server/retrieval/` — chunkers, BM25 store, hybrid fusion, rerankers, manifest, embeddings, code retrieval, token budget
+* `scripts/evaluate_retrieval.py` — retrieval evaluation runner
+* `eval/queries.yaml` — fixed evaluation query set; results land in `eval/results/` (gitignored), deliberate baselines in `eval/baselines/`
+* `config.yaml` — paths, profiles, retrieval settings, security allowlists
+* `.env` — secrets (`GITLAB_TOKEN`, optional `VOYAGE_API_KEY`); never committed, keep mode 600
+* `storage/` — ChromaDB vectors, BM25 indexes, manifest SQLite; never committed
 
-## Knowledge profiles
+## Profiles
 
-The server supports multiple knowledge profiles.
+**Knowledge profiles** (`MCP_KNOWLEDGE_PROFILE`): `indexed` (curated daily set, default) or `full` (entire knowledge base; slow with raw PDFs).
 
-Typical profiles:
+**Embedding profiles** (`embedding.active_profile` in config.yaml):
 
-```yaml
-knowledge:
-  default_profile: "indexed"
+* `local_bge_small` — default; fast local baseline (BAAI/bge-small-en-v1.5, 384d)
+* `local_qwen3_4b` / `local_qwen3_8b` — optional heavier local models; never downloaded unless activated
+* `voyage_*` — optional cloud embeddings, guarded (see Voyage safety below)
 
-  profiles:
-    indexed:
-      paths:
-        - "/Users/oscarbonnet/Documents/80–89 Knowledge Base/87 Indexed"
-
-    full:
-      paths:
-        - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
-```
-
-Use `indexed` for daily work.
-
-Use `full` only when you explicitly want to search the entire knowledge base, including raw PDFs/books.
-
-## Environment variables
-
-Required:
-
-```env
-GITLAB_TOKEN=your_gitlab_token
-GITLAB_BASE_URL=https://gitlab.com/api/v4
-```
-
-Optional:
-
-```env
-MCP_KNOWLEDGE_PROFILE=indexed
-```
-
-Supported values depend on `config.yaml`, usually:
-
-* `indexed`
-* `full`
-
-## Running locally
-
-From the project root:
+## Running
 
 ```bash
-poetry run personal-mcp
-```
-
-Or:
-
-```bash
-poetry run python -m mcp_server
-```
-
-For indexed mode:
-
-```bash
+poetry run personal-mcp                          # default profile
 MCP_KNOWLEDGE_PROFILE=indexed poetry run personal-mcp
 ```
 
-For full mode:
-
-```bash
-MCP_KNOWLEDGE_PROFILE=full poetry run personal-mcp
-```
-
-## Recommended launcher scripts
-
-Daily mode:
-
-```bash
-personal-mcp-indexed
-```
-
-Full-library mode:
-
-```bash
-personal-mcp-full
-```
-
-These scripts should live in:
-
-```text
-/Users/oscarbonnet/.local/bin
-```
-
-They make it easier for MCP clients to launch the server with the right environment variables.
+Recommended launchers for MCP clients (in `~/.local/bin`): `personal-mcp-indexed` (daily) and `personal-mcp-full`. Both use the project venv and keep stdout clean for the MCP protocol; logs go to stderr.
 
 ## MCP tools
 
-The server exposes these tools:
+Retrieval:
 
-### `refresh_indexes`
+* `retrieve_skills(query, top_k)` — GitLab skill chunks
+* `retrieve_knowledge(query, top_k)` — local knowledge (hybrid + rerank)
+* `retrieve_knowledge_debug(query, top_k)` — dense/BM25/fused/reranked candidate diagnostics
+* `retrieve_code(query, repo, top_k)` — code chunks with file paths and line ranges
+* `read_code_symbol(repo, symbol_name, file_path)` — exact current source for a symbol; re-locates Python symbols by AST and refuses to return stale slices
+* `retrieve_memory(query, top_k)` — memory chunks
 
-Rebuilds skills, knowledge, and memory indexes.
+Files and GitLab:
 
-Use after adding or modifying skills, indexed knowledge files, or memory files.
+* `read_local_file`, `list_local_files` — allowlisted local access
+* `get_gitlab_file`, `list_gitlab_repo` — allowlisted GitLab access
+* `propose_memory_update(category, content, reason)` — writes a proposal into the memory `_proposals` folder only
+* `propose_new_skill(name, content, reason)` — creates a branch + merge request into the skills repo `_proposals` path; never writes to main
 
-### `index_status`
+Indexing and status:
 
-Shows current index status.
+* `refresh_indexes(force_rebuild)` / `rebuild_indexes()` — load or fully rebuild collections (rebuild also rewrites BM25 indexes and the manifest)
+* `scan_index_changes`, `list_changed_files`, `list_indexed_files`, `index_manifest_status` — manifest-based change detection (scan-only; does not embed or mutate Chroma)
+* `index_changes(apply, confirm)` — dry-run token estimates; Voyage apply is intentionally stubbed pending incremental upserts
+* `estimate_embedding_cost`, `embedding_budget_status` — token estimates and ledger
+* `collection_status` (includes a `placeholder` flag for empty collections), `code_index_status`, `runtime_status`, `retrieval_config_status`, `embedding_config_status`, `knowledge_profile_status`, `list_code_repos`, `cleanup_stale_collections(dry_run)`
 
-### `knowledge_profile_status`
+## Evaluation
 
-Shows the active knowledge profile and the paths used for retrieval.
-
-### `retrieve_skills`
-
-Retrieves relevant skill files from the GitLab skills repo.
-
-Example use:
-
-```text
-Retrieve skills for reviewing an MCP architecture.
+```bash
+poetry run python scripts/evaluate_retrieval.py --dry-run
+poetry run python scripts/evaluate_retrieval.py --top-k 5 --note "baseline"
+poetry run python scripts/evaluate_retrieval.py --domain code --retrieval-mode hybrid
+poetry run python scripts/evaluate_retrieval.py --disable-reranker
 ```
 
-### `retrieve_knowledge`
-
-Retrieves relevant local knowledge from the active knowledge profile.
-
-Example use:
-
-```text
-Retrieve knowledge about PCA in markets.
-```
-
-### `retrieve_memory`
-
-Retrieves relevant personal/project memory.
-
-Example use:
-
-```text
-Retrieve memory about my coding preferences.
-```
-
-### `read_local_file`
-
-Reads one allowlisted local file.
-
-### `list_local_files`
-
-Lists files inside an allowlisted local directory.
-
-### `get_gitlab_file`
-
-Reads one allowlisted GitLab file.
-
-### `list_gitlab_repo`
-
-Lists an allowlisted GitLab repository tree.
-
-### `propose_memory_update`
-
-Creates a memory proposal in the local memory proposal folder.
-
-This does not directly update permanent memory.
-
-### `propose_new_skill`
-
-Creates a proposed skill in the GitLab skills repo using a branch and merge request.
-
-This does not push directly to `main`.
+`--retrieval-mode dense|dense_rerank|hybrid|hybrid_rerank`, `--disable-bm25`, and `--disable-reranker` override toggles in-process only; `config.yaml` is never modified. Results include expected-term/path hit rates, latencies, and the full runtime config for reproducibility.
 
 ## Security model
 
-The server uses allowlisted read and write roots.
+* Allowlisted `allowed_read_roots` / `allowed_write_roots` plus `never_read` / `never_write` blocklists (includes `.env`, `.venv`, `storage/`, and `config.yaml` itself)
+* GitLab access restricted to allowlisted project IDs; writes only via branch + MR (`allow_direct_main_write: false`)
+* Memory changes are proposals first (`memory/_proposals`); permanent memory is human-curated
 
-Recommended principles:
+### Voyage (cloud embedding) safety
 
-* Do not allow full home-directory access
-* Do not allow direct writes to secrets
-* Do not allow direct writes to the skills repo `main` branch
-* Store memory changes as proposals first
-* Keep `.env`, `.venv`, and `storage/` out of Git
+* Voyage is never the default and is impossible to trigger accidentally:
+  * building the backend object does not import `voyageai` or need an API key
+  * `rebuild_indexes()` is refused while a Voyage profile is active
+  * `index_changes` requires `apply=True` **and** `confirm=True`, checks token budgets against the ledger, and fails clearly if `VOYAGE_API_KEY` is missing
+  * dry-runs record estimated tokens only; budget checks count actual tokens
 
-Important blocked paths should include:
-
-```yaml
-never_read:
-  - "/Users/oscarbonnet/.ssh"
-  - "/Users/oscarbonnet/.gnupg"
-  - "/Users/oscarbonnet/Library"
-  - "/Users/oscarbonnet/Downloads"
-  - "/Users/oscarbonnet/Desktop"
-
-never_write:
-  - "/Users/oscarbonnet/PycharmProjects/mcp-server/.env"
-  - "/Users/oscarbonnet/PycharmProjects/mcp-server/.venv"
-  - "/Users/oscarbonnet/PycharmProjects/mcp-server/storage"
-  - "/Users/oscarbonnet/PycharmProjects/python-project-template"
-```
-
-## GitLab skills repo
-
-The skills repo should contain:
-
-```text
-skills/
-  active/
-    architecture_review.md
-    python_debugging.md
-    refactor_planning.md
-    test_design.md
-
-  _proposals/
-    .gitkeep
-
-usage/
-  usage_log.jsonl
-
-registry.yaml
-README.md
-```
-
-In `config.yaml`, the MCP server should point to the numeric GitLab project ID of the skills repo:
-
-```yaml
-gitlab:
-  skills:
-    project_id: "YOUR_NUMERIC_SKILLS_PROJECT_ID"
-    branch: "main"
-    skills_path: "skills/active"
-    proposal_path: "skills/_proposals"
-    write_mode: "merge_request"
-```
-
-## Local ChromaDB
-
-The server uses local ChromaDB through `chromadb.PersistentClient`.
-
-No Chroma Cloud account is required.
-
-Vectors are stored locally in:
-
-```text
-storage/chroma/
-```
-
-This folder should not be committed.
-
-## Recommended workflow
-
-1. Run the server in indexed mode.
-2. Ask the MCP client to call `knowledge_profile_status`.
-3. Ask the MCP client to call `refresh_indexes`.
-4. Use `retrieve_skills`, `retrieve_knowledge`, or `retrieve_memory`.
-5. Add high-signal notes or summaries to the indexed knowledge folder.
-6. Use full mode only when searching the entire raw knowledge base.
-
-## Development notes
-
-Run formatting:
+## Development
 
 ```bash
 poetry run black .
-```
-
-Run linting:
-
-```bash
 poetry run ruff check .
-```
-
-Run type checking:
-
-```bash
 poetry run mypy .
-```
-
-Run tests, if present:
-
-```bash
 poetry run pytest
 ```
 
 ## Current limitations
 
-* Full knowledge mode can be slow because large PDFs create many document objects.
-* PDF parsing quality depends on the PDF structure.
-* `refresh_indexes()` currently rebuilds collections from scratch.
-* Incremental indexing is not implemented yet.
-* Spreadsheet, image, and table parsing should be handled separately before being added to the main RAG pipeline.
-
+* Indexing is scan-only incremental: `scan_index_changes` detects added/edited/deleted/moved files cheaply, but applying changes still requires a full `rebuild_indexes()`. Per-file Chroma upserts (and the real Voyage apply path) are the next planned phase.
+* BM25 term statistics are cached per process per index file, not persisted to disk.
+* Full knowledge mode can be slow because large PDFs produce many chunks.
+* Spreadsheet/image/table parsing is out of scope for the main RAG pipeline.

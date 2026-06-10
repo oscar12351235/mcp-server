@@ -7,11 +7,11 @@ import pytest
 
 EXPECTED_TOOLS = {
     "collection_status",
+    "cleanup_stale_collections",
     "embedding_config_status",
-    "embedding_status",
-    "config_status",
     "knowledge_profile_status",
-    "index_status",
+    "runtime_status",
+    "retrieval_config_status",
     "refresh_indexes",
     "rebuild_indexes",
     "scan_index_changes",
@@ -212,7 +212,7 @@ def test_qwen3_8b_profile_reports_heavy_model_warning(monkeypatch):
 
     monkeypatch.setitem(server.CONFIG["embedding"], "active_profile", "local_qwen3_8b")
 
-    status = server.embedding_status()
+    status = server.embedding_config_status()
 
     assert status["active_profile"] == "local_qwen3_8b"
     assert any("8B" in warning and "heavy" in warning for warning in status["warnings"])

@@ -38,6 +38,15 @@ class BM25Document:
     metadata: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class BM25Index:
+    documents: list[BM25Document]
+    tokenized_docs: list[list[str]]
+    doc_lengths: list[int]
+    avg_doc_length: float
+    doc_freq: Counter[str]
+
+
 def tokenize(text: str) -> list[str]:
     tokens: list[str] = []
 
@@ -127,39 +136,76 @@ def load_bm25_index(path: str | Path) -> list[BM25Document]:
     return documents
 
 
+def build_bm25_runtime_index(documents: list[BM25Document]) -> BM25Index:
+    tokenized_docs = [tokenize(document.text) for document in documents]
+    doc_lengths = [len(tokens) for tokens in tokenized_docs]
+    avg_doc_length = sum(doc_lengths) / max(1, len(documents))
+    doc_freq: Counter[str] = Counter()
+    for tokens in tokenized_docs:
+        doc_freq.update(set(tokens))
+
+    return BM25Index(
+        documents=documents,
+        tokenized_docs=tokenized_docs,
+        doc_lengths=doc_lengths,
+        avg_doc_length=avg_doc_length,
+        doc_freq=doc_freq,
+    )
+
+
+# Term statistics are precomputed once per index file and reused across queries.
+# Cache entries are keyed by (path, mtime_ns, size) so a rewritten index file
+# invalidates its cache entry automatically.
+_RUNTIME_INDEX_CACHE: dict[str, tuple[tuple[int, int], BM25Index]] = {}
+
+
+def load_bm25_runtime_index(path: str | Path) -> BM25Index:
+    path = Path(path)
+    if not path.exists():
+        return build_bm25_runtime_index([])
+
+    stat = path.stat()
+    cache_key = str(path)
+    signature = (stat.st_mtime_ns, stat.st_size)
+    cached = _RUNTIME_INDEX_CACHE.get(cache_key)
+    if cached and cached[0] == signature:
+        return cached[1]
+
+    index = build_bm25_runtime_index(load_bm25_index(path))
+    _RUNTIME_INDEX_CACHE[cache_key] = (signature, index)
+    return index
+
+
 def bm25_retrieve(
     query: str,
-    documents: list[BM25Document],
+    documents: list[BM25Document] | BM25Index,
     *,
     top_k: int,
     k1: float = 1.5,
     b: float = 0.75,
 ) -> list[Candidate]:
-    if not documents:
+    index = documents if isinstance(documents, BM25Index) else build_bm25_runtime_index(documents)
+    if not index.documents:
         return []
 
-    tokenized_docs = [tokenize(document.text) for document in documents]
     query_tokens = tokenize(query)
 
     if not query_tokens:
         return []
 
-    doc_count = len(documents)
-    doc_lengths = [len(tokens) for tokens in tokenized_docs]
-    avg_doc_length = sum(doc_lengths) / max(1, doc_count)
-    doc_freq: Counter[str] = Counter()
-
-    for tokens in tokenized_docs:
-        doc_freq.update(set(tokens))
+    doc_count = len(index.documents)
+    doc_lengths = index.doc_lengths
+    avg_doc_length = index.avg_doc_length
+    doc_freq = index.doc_freq
 
     scores: list[tuple[int, float]] = []
 
-    for index, tokens in enumerate(tokenized_docs):
+    for doc_index, tokens in enumerate(index.tokenized_docs):
         if not tokens:
             continue
 
         frequencies = Counter(tokens)
-        doc_length = doc_lengths[index]
+        doc_length = doc_lengths[doc_index]
         score = 0.0
 
         for token in query_tokens:
@@ -173,13 +219,13 @@ def bm25_retrieve(
             score += idf * ((freq * (k1 + 1.0)) / denominator)
 
         if score > 0:
-            scores.append((index, score))
+            scores.append((doc_index, score))
 
     scores.sort(key=lambda item: item[1], reverse=True)
 
     candidates: list[Candidate] = []
-    for rank, (index, score) in enumerate(scores[:top_k], start=1):
-        document = documents[index]
+    for rank, (doc_index, score) in enumerate(scores[:top_k], start=1):
+        document = index.documents[doc_index]
         candidates.append(
             Candidate(
                 chunk_id=document.chunk_id,

@@ -242,6 +242,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="List selected queries and exit without running retrieval.",
     )
     parser.add_argument(
+        "--retrieval-mode",
+        type=str,
+        default=None,
+        choices=["dense", "dense_rerank", "hybrid", "hybrid_rerank"],
+        help="Override BM25/reranker toggles in-process (config.yaml is not modified).",
+    )
+    parser.add_argument(
+        "--disable-bm25",
+        action="store_true",
+        help="Disable BM25 hybrid retrieval for this run only.",
+    )
+    parser.add_argument(
+        "--disable-reranker",
+        action="store_true",
+        help="Disable the reranker for this run only.",
+    )
+    parser.add_argument(
         "--note",
         type=str,
         default="",
@@ -274,6 +291,15 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Loading MCP server module... ({len(selected)} queries selected)", file=sys.stderr)
     from mcp_server import mcp_server as server  # noqa: E402
 
+    # In-process retrieval mode overrides; persisted config.yaml is untouched.
+    if args.retrieval_mode:
+        server.CONFIG["retrieval"]["bm25_enabled"] = args.retrieval_mode.startswith("hybrid")
+        server.CONFIG["reranker"]["enabled"] = args.retrieval_mode.endswith("rerank")
+    if args.disable_bm25:
+        server.CONFIG["retrieval"]["bm25_enabled"] = False
+    if args.disable_reranker:
+        server.CONFIG["reranker"]["enabled"] = False
+
     server._ensure_indexes()
     if any(q.get("domain") == "code" for q in selected) and server._code_retrieval_enabled():
         server._ensure_code_index()
@@ -304,6 +330,9 @@ def main(argv: list[str] | None = None) -> int:
             "tag": args.tag,
             "domain": args.domain,
             "top_k_override": args.top_k,
+            "retrieval_mode_override": args.retrieval_mode,
+            "disable_bm25": args.disable_bm25,
+            "disable_reranker": args.disable_reranker,
         },
         "runtime": runtime,
         "retrieval_config": retrieval_cfg,
