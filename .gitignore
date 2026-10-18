@@ -29,3 +29,15 @@ htmlcov/
 
 # secrets
 .env
+.env.*
+
+# Local generated retrieval/vector state
+storage/
+*.sqlite3
+*.db
+
+# Local diagnostics
+knowledge_candidate_files.txt
+
+# Evaluation outputs
+eval/results/*.json

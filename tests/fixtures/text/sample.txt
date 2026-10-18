@@ -1,0 +1,5 @@
+First paragraph explains the main idea in a compact way.
+
+Second paragraph adds implementation detail and should stay close to paragraph boundaries.
+
+Third paragraph is here so the generic chunker has enough text to split when the target size is small.

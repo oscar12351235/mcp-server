@@ -2,15 +2,23 @@ gitlab:
   base_url: "https://gitlab.com/api/v4"
 
   skills:
-    project_id: "12345678"
+    project_id: "82914338"
     branch: "main"
     skills_path: "skills/active"
     proposal_path: "skills/_proposals"
     write_mode: "merge_request"
 
 knowledge:
-  paths:
-    - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
+  default_profile: "indexed"
+
+  profiles:
+    indexed:
+      paths:
+        - "/Users/oscarbonnet/Documents/80–89 Knowledge Base/87 Indexed"
+
+    full:
+      paths:
+        - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
 
 memory:
   local_path: "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory"
@@ -24,18 +32,134 @@ projects:
     - "mcp-server"
     - "python-project-template"
 
+code_retrieval:
+  enabled: true
+  default_profile: "projects"
+
+  chunking:
+    include_full_class_chunks: false
+    include_method_chunks: true
+
+  profiles:
+    projects:
+      paths:
+        - "/Users/oscarbonnet/PycharmProjects/mcp-server"
+      excluded:
+        - ".venv"
+        - "storage"
+        - ".git"
+        - "node_modules"
+        - "__pycache__"
+        - ".pytest_cache"
+        - ".mypy_cache"
+        - ".ruff_cache"
+        - "coverage.xml"
+        - "htmlcov"
+        - "eval/results/*"
+        - "eval/baselines/*"
+
+  allowed_extensions:
+    - ".py"
+    - ".md"
+    - ".yaml"
+    - ".yml"
+    - ".toml"
+    - ".json"
+    - ".sql"
+    - ".sh"
+
 retrieval:
   embedding_model: "BAAI/bge-small-en-v1.5"
+  bm25_enabled: true
+  dense_top_k: 60
+  bm25_top_k: 60
+  fused_top_k: 80
+  final_top_k: 8
+  fusion: "rrf"
 
   defaults:
     skills_top_k: 3
-    knowledge_top_k: 5
+    knowledge_top_k: 8
     memory_top_k: 5
 
   limits:
     skills_top_k_max: 10
-    knowledge_top_k_max: 20
+    knowledge_top_k_max: 30
     memory_top_k_max: 10
+
+reranker:
+  enabled: true
+  provider: "local_huggingface"
+  model: "BAAI/bge-reranker-v2-m3"
+  candidate_top_k: 50
+  final_top_k: 8
+  batch_size: 8
+
+embedding:
+  active_profile: "local_bge_small"
+
+  profiles:
+    local_bge_small:
+      provider: "local_huggingface"
+      model: "BAAI/bge-small-en-v1.5"
+      dimension: 384
+      normalize: true
+
+    local_qwen3_4b:
+      provider: "local_huggingface"
+      model: "Qwen/Qwen3-Embedding-4B"
+      dimension: 2560
+      normalize: true
+      instruction: "Represent this document for retrieval."
+      trust_remote_code: true
+
+    local_qwen3_8b:
+      provider: "local_huggingface"
+      model: "Qwen/Qwen3-Embedding-8B"
+      dimension: 4096
+      normalize: true
+      instruction: "Represent this document for retrieval."
+      trust_remote_code: true
+
+    voyage_4_large:
+      provider: "voyage"
+      model: "voyage-4-large"
+      dimension: 1024
+      input_type_document: "document"
+      input_type_query: "query"
+      batch_size: 64
+
+    voyage_code_3:
+      provider: "voyage"
+      model: "voyage-code-3"
+      dimension: 1024
+      input_type_document: "document"
+      input_type_query: "query"
+      batch_size: 64
+
+    voyage_finance_2:
+      provider: "voyage"
+      model: "voyage-finance-2"
+      dimension: 1024
+      input_type_document: "document"
+      input_type_query: "query"
+      batch_size: 64
+
+voyage:
+  require_explicit_apply: true
+  max_tokens_per_run_default: 2000000
+  max_tokens_per_file_default: 500000
+  warn_at_total_tokens: 150000000
+  hard_stop_at_total_tokens: 190000000
+
+chunking:
+  active_profile: "structure_v1"
+
+  profiles:
+    structure_v1:
+      strategy: "structure_aware"
+      chunk_size: 1024
+      chunk_overlap: 150
 
 security:
   allow_gitlab_write: true
@@ -43,9 +167,9 @@ security:
   allow_delete: false
 
   allowed_read_roots:
-    - "/Users/oscarbonnet/Documents/80–89 Knowledge Base"
-    - "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory"
-    - "/Users/oscarbonnet/PycharmProjects"
+    - "/Users/oscarbonnet/Documents/80–89 Knowledge Base" # local math/cs/finance books, articles, etc
+    - "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory" # local MCP memory about projects, personal preferences on how to do things, etc
+    - "/Users/oscarbonnet/PycharmProjects" # local PycharmProjects repos
 
   allowed_write_roots:
     - "/Users/oscarbonnet/Documents/40–49 Coding & Data/44 MCP Memory/_proposals"
@@ -62,4 +186,5 @@ security:
     - "/Users/oscarbonnet/PycharmProjects/mcp-server/.env"
     - "/Users/oscarbonnet/PycharmProjects/mcp-server/.venv"
     - "/Users/oscarbonnet/PycharmProjects/mcp-server/storage"
+    - "/Users/oscarbonnet/PycharmProjects/mcp-server/config.yaml"
     - "/Users/oscarbonnet/PycharmProjects/python-project-template"
